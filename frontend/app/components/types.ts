@@ -15,6 +15,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   musicPlaylist?: MusicPlaylist;
+  voiceAudioUrl?: string; // optional: URL for assistant TTS audio playback
 }
 
 export interface Section {
@@ -96,6 +97,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   musicPlaylist?: MusicPlaylist; // NEW: Optional music playlist
+  voiceAudioUrl?: string; // optional: URL for assistant TTS audio playback
 }
 
 // Music System Types

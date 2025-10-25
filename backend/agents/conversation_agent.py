@@ -35,7 +35,7 @@ class ConversationAgent:
             parts.append(f"Source: {src}\n{content}")
         return "\n\n---\n\n".join(parts)
 
-    async def handle_text(self, session_id: str, text: str, history: Optional[List[str]] = None) -> Dict[str, Any]:
+    async def handle_text(self, session_id: str, text: str, history: Optional[List[str]] = None, channel: str = "text") -> Dict[str, Any]:
         """process text input and return final response state.
 
         this method runs the sub-agents in sequence. In production this should be
@@ -52,7 +52,8 @@ class ConversationAgent:
         context = self._format_docs(context_docs)
         if history:
             context = ("Previous conversation:\n- " + "\n- ".join(history) + "\n\n" + context).strip()
-        tmpl = PROMPTS[PromptType.CONVERSATION].template
+
+        tmpl = PROMPTS[PromptType.CONVERSATION_TTS if channel == "voice" else PromptType.CONVERSATION].template
 
         # offline mode to avoid calling LLM in tests/demo
         import os

@@ -26,7 +26,7 @@ export class MusicService {
         throw new Error(`Gemini API error: ${response.status}`);
       }
 
-      const data = await response.json();
+  const data = await response.json();
       // Expecting { features, musicalElements, reasoning }
       return data;
     } catch (error) {
@@ -56,13 +56,32 @@ export class MusicService {
         q: searchQuery,
         limit: '20'
       });
-      const response = await fetch(`${API_BASE_URL}/api/music/search?${params.toString()}`);
+  const response = await fetch(`${API_BASE_URL}/api/music/search?${params.toString()}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch songs from Saavn');
       }
 
-      const songs: Song[] = await response.json();
+      const data = await response.json();
+      // Backend returns TrackMetadata[]; map to Song[]
+      const toMMSS = (ms?: number | null): string => {
+        if (!ms || ms <= 0) return '0:00';
+        const totalSec = Math.floor(ms / 1000);
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+      };
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.results) ? data.results : []);
+      const songs: Song[] = list.map((t: any) => ({
+        id: String(t.id ?? ''),
+        title: t.title ?? '',
+        artist: Array.isArray(t.artists) ? (t.artists[0] ?? 'Unknown') : (t.artists ?? 'Unknown'),
+        album: t.album ?? '',
+        duration: toMMSS(t.duration_ms),
+        imageUrl: '/images/music/default.svg',
+        playUrl: t.stream_url ?? '#',
+        year: undefined,
+      }));
       return songs;
 
     } catch (error) {

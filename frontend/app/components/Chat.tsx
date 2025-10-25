@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, MessageCircle, Music, Loader, AlertCircle } from 'lucide-react';
+import { Send, Sparkles, MessageCircle, Music, Loader, AlertCircle, Volume2 } from 'lucide-react';
 import type { ChatMessage } from './types';
 import { MusicService } from '../services/musicService';
+import { ChatService } from '../services/chatService';
+import { TTSService } from '../services/ttsService';
 import { MusicPlaylistCard } from './MusicPlaylistCard';
 
 interface ChatProps {
@@ -15,6 +17,9 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
   const [isMusicGenerating, setIsMusicGenerating] = useState<boolean>(false);
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  // TTS state
+  const [isSpeakingIndex, setIsSpeakingIndex] = useState<number | null>(null);
+  const [ttsError, setTtsError] = useState<string | null>(null);
 
   // Sync with parent messages
   useEffect(() => {
@@ -28,6 +33,32 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
   useEffect(() => {
     scrollToBottom();
   }, [localMessages, isLoading, isMusicGenerating]);
+
+  const speakMessage = async (index: number) => {
+    const msg = localMessages[index];
+    if (!msg || msg.role !== 'assistant') return;
+    setTtsError(null);
+    try {
+      setIsSpeakingIndex(index);
+      // reuse if already synthesized
+      if (msg.voiceAudioUrl) {
+        const audio = new Audio(msg.voiceAudioUrl);
+        await audio.play();
+        return;
+      }
+      const res = await TTSService.convert(msg.content, { language: 'english', speaker: 'anushka' });
+      const updated = [...localMessages];
+      updated[index] = { ...msg, voiceAudioUrl: res.url };
+      setLocalMessages(updated);
+      const audio = new Audio(res.url);
+      await audio.play();
+    } catch (err: any) {
+      console.error('TTS failed', err);
+      setTtsError(err?.message || 'Failed to synthesize speech.');
+    } finally {
+      setIsSpeakingIndex(null);
+    }
+  };
 
   const detectMusicRequest = (message: string): boolean => {
     const musicKeywords = [
@@ -135,7 +166,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
   return (
     <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[700px] animate-fadeIn">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-700 to-orange-700 text-white p-6 flex items-center space-x-4 relative overflow-hidden">
+  <div className="bg-linear-to-r from-amber-700 to-orange-700 text-white p-6 flex items-center space-x-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-white opacity-5 animate-pulse"></div>
         <MessageCircle className="w-8 h-8 animate-bounce relative z-10" />
         <div className="relative z-10">
@@ -151,7 +182,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-stone-50 to-white">
+  <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-linear-to-b from-stone-50 to-white">
         {localMessages.length === 0 ? (
           <div className="text-center py-8 animate-fadeIn">
             <div className="flex items-center justify-center space-x-3 mb-6">
@@ -189,14 +220,14 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
 
             {/* Feature Highlights */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-xl border-2 border-amber-200">
+              <div className="bg-linear-to-br from-amber-50 to-orange-50 p-4 rounded-xl border-2 border-amber-200">
                 <MessageCircle className="w-8 h-8 text-amber-600 mb-2" />
                 <h4 className="font-bold text-amber-900 mb-1">Heritage Chat</h4>
                 <p className="text-sm text-amber-700">
                   Learn about Indian ecology, culture, myths & history
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-xl border-2 border-purple-200">
+              <div className="bg-linear-to-br from-purple-50 to-pink-50 p-4 rounded-xl border-2 border-purple-200">
                 <Music className="w-8 h-8 text-purple-600 mb-2" />
                 <h4 className="font-bold text-purple-900 mb-1">Music Synthesis</h4>
                 <p className="text-sm text-purple-700">
@@ -217,11 +248,22 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
                   <div
                     className={`max-w-[85%] rounded-2xl p-4 shadow-md ${
                       msg.role === 'user'
-                        ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white'
+                        ? 'bg-linear-to-r from-amber-600 to-orange-600 text-white'
                         : 'bg-white text-stone-800 border-2 border-stone-200'
                     } transform transition-all duration-300 hover:scale-[1.02]`}
                   >
                     <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                    {/* Speak button for assistant messages */}
+                    {msg.role === 'assistant' && (
+                      <button
+                        onClick={() => speakMessage(index)}
+                        className="mt-3 inline-flex items-center space-x-2 text-sm px-3 py-1 rounded-lg border border-stone-300 hover:border-amber-600 hover:text-amber-700 transition"
+                        title="Speak this message"
+                      >
+                        <Volume2 className="w-4 h-4" />
+                        <span>{isSpeakingIndex === index ? 'Speaking…' : (msg.voiceAudioUrl ? 'Replay' : 'Speak')}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -229,6 +271,12 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
                 {msg.musicPlaylist && (
                   <div className="animate-slideUp" style={{ animationDelay: '0.3s' }}>
                     <MusicPlaylistCard playlist={msg.musicPlaylist} />
+                  </div>
+                )}
+                {/* Voice audio playback */}
+                {msg.voiceAudioUrl && (
+                  <div className="mt-2 animate-fadeIn">
+                    <audio controls src={msg.voiceAudioUrl} className="w-full" />
                   </div>
                 )}
               </div>
@@ -279,7 +327,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
           <button
             onClick={handleSendMessage}
             disabled={isLoading || isMusicGenerating || !inputMessage.trim()}
-            className="bg-gradient-to-r from-amber-700 to-orange-700 text-white px-6 py-4 rounded-xl hover:from-amber-800 hover:to-orange-800 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transform hover:scale-105 active:scale-95 duration-300 flex items-center space-x-2"
+            className="bg-linear-to-r from-amber-700 to-orange-700 text-white px-6 py-4 rounded-xl hover:from-amber-800 hover:to-orange-800 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transform hover:scale-105 active:scale-95 duration-300 flex items-center space-x-2"
           >
             {(isLoading || isMusicGenerating) ? (
               <Loader className="w-6 h-6 animate-spin" />
@@ -289,9 +337,14 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
           </button>
         </div>
         
+        {/* TTS status */}
+        {ttsError && (
+          <div className="mt-3 text-xs text-red-700">{ttsError}</div>
+        )}
+
         {/* Tip */}
         <div className="mt-3 flex items-start space-x-2 text-xs text-stone-600">
-          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <p>
             <span className="font-semibold">Tip:</span> Mention "music", "playlist", or "songs" in your message to generate a curated musical journey for any story!
           </p>

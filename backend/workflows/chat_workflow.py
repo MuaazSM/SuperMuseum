@@ -18,11 +18,15 @@ class ChatWorkflow:
         self.agent = ConversationAgent()
         self._history: DefaultDict[str, List[str]] = defaultdict(list)
 
-    async def run(self, session_id: str, text: str) -> Dict[str, Any]:
-        """execute conversation flow and return state containing final_response."""
+    async def run(self, session_id: str, text: str, is_voice: bool = False) -> Dict[str, Any]:
+        """execute conversation flow and return state containing final_response.
+
+        is_voice: whether the input came from a voice channel (optimize for TTS)
+        """
         logger.debug("chat_workflow: running for session=%s", session_id)
         history = self._history.get(session_id, [])
-        state = await self.agent.handle_text(session_id, text, history=history)
+        channel = "voice" if is_voice else "text"
+        state = await self.agent.handle_text(session_id, text, history=history, channel=channel)
         # update memory
         self._history[session_id].append(f"user: {text}")
         self._history[session_id].append(f"assistant: {state.get('final_response','')}")

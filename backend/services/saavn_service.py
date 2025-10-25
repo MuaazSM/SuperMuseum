@@ -35,7 +35,12 @@ class SaavnClient:
         await asyncio.sleep(self._rate_limit)
 
     async def search_songs(self, query: str, limit: int = 10) -> List[Dict]:
-        """search songs on Saavn and return parsed results."""
+        """search songs on Saavn-compatible APIs and return normalized results.
+
+        Supports multiple backends:
+        - saavn.sumit.co/api ("/search/songs?query=<q>&limit=<n>") -> data.results[]
+        - local jiosaavn proxy ("/search?query=<q>") -> data.songs.results[]
+        """
         await self._throttle()
         if os.getenv("SAAVN_OFFLINE") == "1":
             logger.info("SAAVN_OFFLINE=1: returning mock search results")
@@ -50,16 +55,45 @@ class SaavnClient:
             if cache_key in self._search_cache:
                 self._search_cache.move_to_end(cache_key)
                 return list(self._search_cache[cache_key])
-        url = f"{self._base_url}/search/songs"
-        params = {"query": query, "page": 1, "limit": limit}
-        logger.info("saavn search: %s", params)
+        results: List[Dict] = []
         async with httpx.AsyncClient(timeout=20.0) as client:
-            resp = await client.get(url, params=params)
-            resp.raise_for_status()
-            data = resp.json()
-        results = []
-        for item in (data.get("data", {}).get("results", []) or []):
-            results.append(self._parse_song(item))
+            # Variant A: sumit.co style
+            try:
+                url_a = f"{self._base_url}/search/songs"
+                params_a = {"query": query, "page": 1, "limit": limit}
+                logger.info("saavn search (A): %s", params_a)
+                resp_a = await client.get(url_a, params=params_a)
+                if resp_a.status_code == 200:
+                    data_a = resp_a.json()
+                    for item in (data_a.get("data", {}).get("results", []) or []):
+                        results.append(self._parse_song(item))
+            except Exception as e:
+                logger.debug("variant A failed: %s", e)
+
+            # If no results, try Variant B: local jiosaavn proxy style
+            if not results:
+                try:
+                    url_b = f"{self._base_url}/search"
+                    params_b = {"query": query}
+                    logger.info("saavn search (B): %s", params_b)
+                    resp_b = await client.get(url_b, params=params_b)
+                    if resp_b.status_code == 200:
+                        data_b = resp_b.json()
+                        # songs under data.songs.results
+                        song_items = (data_b.get("data", {}).get("songs", {}).get("results", []) or [])
+                        for item in song_items[:limit]:
+                            # Normalize minimal fields available in search response
+                            norm = {
+                                "id": item.get("id"),
+                                "title": item.get("title"),
+                                "album": item.get("album"),
+                                "primaryArtists": item.get("primaryArtists"),
+                                # duration often not present in search; leave None
+                            }
+                            results.append(self._parse_song(norm))
+                except Exception as e:
+                    logger.debug("variant B failed: %s", e)
+
         # update cache
         async with self._cache_lock:
             self._search_cache[cache_key] = results

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 async def chat_text(req: TextChatRequest):
     """accept text input and return conversational response."""
     session_id = req.session_id or str(uuid.uuid4())
-    state = await chat_workflow.run(session_id, req.message)
+    state = await chat_workflow.run(session_id, req.message, is_voice=False)
     return {"session_id": session_id, "response": state.get("final_response")}
 
 
@@ -40,7 +40,7 @@ async def chat_voice(file: UploadFile = File(...)) -> VoiceChatResponse:
 
     text = transcribed.get("text", "")
     session_id = str(uuid.uuid4())
-    state = await chat_workflow.run(session_id, text)
+    state = await chat_workflow.run(session_id, text, is_voice=True)
 
     # synthesize response using Sarvam (if configured)
     audio_b64 = None
