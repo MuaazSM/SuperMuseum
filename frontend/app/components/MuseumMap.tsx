@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { culturalPoints } from './data/cultural-points';
-import { Info, X } from 'lucide-react';
+import { Info, X, DoorOpen } from 'lucide-react';
+import { rooms } from './data/museum-rooms';
 
 interface Position {
     x: number;
@@ -8,10 +8,13 @@ interface Position {
 }
 
 const MuseumMap: React.FC = () => {
-    const [position, setPosition] = useState<Position>({ x: 50, y: 50 });
+    const [position, setPosition] = useState<Position>({ x: 500, y: 450 });
     const [activePoint, setActivePoint] = useState<number | null>(null);
+    const [currentRoom, setCurrentRoom] = useState('main');
     const moveSpeed = 10;
-    const interactionRadius = 50; // Distance within which character can interact with points
+    const interactionRadius = 50;
+
+    const room = rooms.find(r => r.id === currentRoom)!;
 
     const handleKeyPress = useCallback((event: KeyboardEvent) => {
         if (event.key === 'Escape') {
@@ -19,40 +22,70 @@ const MuseumMap: React.FC = () => {
             return;
         }
 
-        // Prevent default browser scrolling behavior for arrow keys
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.key)) {
+        // Prevent default browser scrolling for movement and interaction keys.
+        // Note: Space is reported as ' ' in event.key on most browsers, so include
+        // checks for both the actual space character and event.code === 'Space'.
+        if (
+            ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(event.key) ||
+            event.key === ' ' ||
+            event.key === 'Spacebar' || // older browsers
+            event.code === 'Space'
+        ) {
             event.preventDefault();
         }
 
+        let newPosition = { ...position };
+
         switch (event.key) {
             case 'ArrowUp':
-                setPosition(prev => ({ ...prev, y: Math.max(0, prev.y - moveSpeed) }));
+                newPosition.y = Math.max(0, position.y - moveSpeed);
                 break;
             case 'ArrowDown':
-                setPosition(prev => ({ ...prev, y: Math.min(540, prev.y + moveSpeed) }));
+                newPosition.y = Math.min(540, position.y + moveSpeed);
                 break;
             case 'ArrowLeft':
-                setPosition(prev => ({ ...prev, x: Math.max(0, prev.x - moveSpeed) }));
+                newPosition.x = Math.max(0, position.x - moveSpeed);
                 break;
             case 'ArrowRight':
-                setPosition(prev => ({ ...prev, x: Math.min(940, prev.x + moveSpeed) }));
+                newPosition.x = Math.min(940, position.x + moveSpeed);
                 break;
             case 'Enter':
             case ' ':
-                // Check for nearby cultural points when space or enter is pressed
-                const nearbyPoint = culturalPoints.find(point => {
-                    const distance = Math.sqrt(
-                        Math.pow(point.x - position.x, 2) + 
-                        Math.pow(point.y - position.y, 2)
-                    );
-                    return distance <= interactionRadius;
-                });
-                if (nearbyPoint) {
-                    setActivePoint(nearbyPoint.id);
+                // Check for nearby doors
+                for (const door of room.doors) {
+                    const dx = door.x - position.x;
+                    const dy = door.y - position.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance <= interactionRadius) {
+                        setCurrentRoom(door.leadsTo);
+                        if (door.leadsTo === 'main') {
+                            setPosition({ x: 500, y: 450 });
+                        } else {
+                            setPosition({ x: 500, y: 500 });
+                        }
+                        return;
+                    }
+                }
+
+                // If no door interaction, check for interactive points
+                for (const point of room.interactivePoints) {
+                    const dx = point.x - position.x;
+                    const dy = point.y - position.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance <= interactionRadius) {
+                        setActivePoint(point.id);
+                        return;
+                    }
                 }
                 break;
+
+                break;
         }
-    }, [position]);
+
+        setPosition(newPosition);
+    }, [position, currentRoom]);
 
     useEffect(() => {
         window.addEventListener('keydown', handleKeyPress);
@@ -61,18 +94,53 @@ const MuseumMap: React.FC = () => {
         };
     }, [handleKeyPress]);
 
-    const activePointData = culturalPoints.find(p => p.id === activePoint);
+    const activePointData = room.interactivePoints.find(p => p.id === activePoint);
 
     return (
         <div className="relative w-[1000px] h-[600px] mx-auto border-2 border-gray-300 overflow-hidden">
             <img 
-                src="/assets/museum.jpg" 
-                alt="Museum Map" 
+                src={room.image}
+                alt={`${room.name} View`}
                 className="w-full h-full object-cover"
             />
             
-            {/* Cultural Points */}
-            {culturalPoints.map(point => {
+            {/* Room Name */}
+            <div className="absolute top-4 left-4 bg-white bg-opacity-90 p-2 rounded-lg shadow-lg">
+                <h2 className="text-xl font-bold text-gray-800">{room.name}</h2>
+            </div>
+
+            {/* Doors */}
+            {room.doors.map(door => {
+                const isNearby = Math.abs(door.x - position.x) < interactionRadius &&
+                                Math.abs(door.y - position.y) < interactionRadius;
+                return (
+                    <div
+                        key={door.id}
+                        className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${
+                            isNearby ? 'animate-pulse' : ''
+                        }`}
+                        style={{
+                            left: `${door.x}px`,
+                            top: `${door.y}px`,
+                            width: `${door.width}px`,
+                            height: `${door.height}px`
+                        }}
+                    >
+                        <div className={`w-full h-full flex items-center justify-center
+                            ${isNearby ? 'text-yellow-500' : 'text-gray-400'}`}>
+                            <DoorOpen className="w-8 h-8" />
+                            {isNearby && (
+                                <div className="absolute -bottom-8 whitespace-nowrap bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">
+                                    Press Space to enter {door.label}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            })}
+
+            {/* Interactive Points */}
+            {room.interactivePoints.map(point => {
                 const distance = Math.sqrt(
                     Math.pow(point.x - position.x, 2) + 
                     Math.pow(point.y - position.y, 2)
@@ -93,6 +161,11 @@ const MuseumMap: React.FC = () => {
                         <div className={`w-full h-full rounded-full flex items-center justify-center
                             ${isNearby ? 'bg-yellow-300' : 'bg-gray-400'}`}>
                             <Info className={`w-4 h-4 ${isNearby ? 'text-yellow-700' : 'text-white'}`} />
+                            {isNearby && (
+                                <div className="absolute -bottom-8 whitespace-nowrap bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">
+                                    Press Space to interact
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
@@ -141,7 +214,7 @@ const MuseumMap: React.FC = () => {
             {/* Instructions */}
             <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 p-3 rounded-lg shadow-lg">
                 <p className="text-sm text-gray-700">
-                    Use arrow keys to move. Press Space or Enter near a point of interest to interact.
+                    Use arrow keys to move. Press Space or Enter near points of interest or doors to interact.
                     Press Esc to close information.
                 </p>
             </div>
