@@ -3,6 +3,7 @@ import { Navigation } from '../components/Navigation';
 import { Home } from '../components/Home';
 import { Exhibits } from '../components/Exhibits';
 import { Chat } from '../components/Chat';
+import { ChatService } from '../services/chatService';
 import { Footer } from '../components/Footer';
 import { ExhibitModal } from '../components/ExhibitModal';
 import { sections, galleryCards, navSections } from '../components/data';
@@ -11,8 +12,8 @@ import type { ChatMessage, Particle, Exhibit } from '../components/types';
 export default function IndianMuseum() {
   const [activeSection, setActiveSection] = useState<string>('home');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [inputMessage, setInputMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [selectedExhibit, setSelectedExhibit] = useState<Exhibit | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -60,15 +61,29 @@ export default function IndianMuseum() {
     setChatMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Simulate API call - Replace with actual FastAPI endpoint
-    setTimeout(() => {
+    try {
+      const result = await ChatService.sendText(message, sessionId ?? undefined);
+      // backend returns { session_id, response }
+      if (result?.session_id) setSessionId(result.session_id);
+
+      const botText = result?.response || 'Sorry, I had no response from the server.';
+
       const botResponse: ChatMessage = {
         role: 'assistant',
-        content: `This is a placeholder response. Connect this to your FastAPI backend at your endpoint. You asked: "${message}"`
+        content: botText,
+      };
+
+      setChatMessages(prev => [...prev, botResponse]);
+    } catch (err) {
+      console.error('Chat request failed', err);
+      const botResponse: ChatMessage = {
+        role: 'assistant',
+        content: '❌ Failed to reach the backend. Please check the server and try again.'
       };
       setChatMessages(prev => [...prev, botResponse]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const renderContent = () => {

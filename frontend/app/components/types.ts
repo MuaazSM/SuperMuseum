@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type { LucideIcon } from 'lucide-react';
 
 export interface Exhibit {
   id: number;
@@ -6,19 +7,20 @@ export interface Exhibit {
   subtitle: string;
   description: string;
   highlights: string[];
-  icon: ComponentType<any>;
+  icon: LucideIcon;
   color: string;
 }
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  musicPlaylist?: MusicPlaylist;
 }
 
 export interface Section {
   id: string;
   label: string;
-  icon: ComponentType<any>;
+  icon: LucideIcon;
 }
 
 export interface Particle {
@@ -31,6 +33,55 @@ export interface Particle {
   opacity: number;
 }
 
+// Music System Types
+export interface MusicFeatures {
+  mood: string;
+  era: string;
+  region: string;
+  emotion: string[];
+  themes: string[];
+}
+
+export interface MusicalElements {
+  instruments: string[];
+  ragas: string[];
+  genres: string[];
+  regionalStyles: string[];
+}
+
+export interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  duration: string;
+  imageUrl: string;
+  playUrl: string;
+  year?: string;
+}
+
+export interface PlaylistItem {
+  song: Song;
+  reasoning: string;
+  culturalContext: string;
+  relevanceScore: number;
+}
+
+export interface MusicPlaylist {
+  storyTitle: string;
+  summary: string;
+  features: MusicFeatures;
+  musicalElements: MusicalElements;
+  playlist: PlaylistItem[];
+  generatedAt: string;
+}
+
+export interface StoryAnalysis {
+  features: MusicFeatures;
+  musicalElements: MusicalElements;
+  reasoning: string;
+}
+
 export interface GalleryCard {
   title: string;
   icon: ComponentType<any>;
@@ -39,4 +90,59 @@ export interface GalleryCard {
   section: string;
   description: string;
   emoji: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  musicPlaylist?: MusicPlaylist; // NEW: Optional music playlist
+}
+
+// Music System Types
+export interface MusicFeatures {
+  mood: string;
+  era: string;
+  region: string;
+  emotion: string[];
+  themes: string[];
+}
+
+export interface MusicalElements {
+  instruments: string[];
+  ragas: string[];
+  genres: string[];
+  regionalStyles: string[];
+}
+
+export interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  duration: string;
+  imageUrl: string;
+  playUrl: string;
+  year?: string;
+}
+
+export interface PlaylistItem {
+  song: Song;
+  reasoning: string;
+  culturalContext: string;
+  relevanceScore: number;
+}
+
+export interface MusicPlaylist {
+  storyTitle: string;
+  summary: string;
+  features: MusicFeatures;
+  musicalElements: MusicalElements;
+  playlist: PlaylistItem[];
+  generatedAt: string;
+}
+
+export interface StoryAnalysis {
+  features: MusicFeatures;
+  musicalElements: MusicalElements;
+  reasoning: string;
 }
