@@ -56,13 +56,13 @@ export default function IndianMuseum() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const handleSendMessage = async (message: string): Promise<void> => {
+  const handleSendMessage = async (message: string, language?: string): Promise<void> => {
     const userMessage: ChatMessage = { role: 'user', content: message };
     setChatMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
-      const result = await ChatService.sendText(message, sessionId ?? undefined);
+  const result = await ChatService.sendText(message, sessionId ?? undefined, language);
       // backend returns { session_id, response }
       if (result?.session_id) setSessionId(result.session_id);
 

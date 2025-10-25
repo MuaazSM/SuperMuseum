@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
 async def chat_text(req: TextChatRequest):
     """accept text input and return conversational response."""
     session_id = req.session_id or str(uuid.uuid4())
-    state = await chat_workflow.run(session_id, req.message, is_voice=False)
+    # pass through desired language if provided
+    lang = getattr(req.language, "value", None) if req.language else None
+    state = await chat_workflow.run(session_id, req.message, is_voice=False, language=lang)
     return {"session_id": session_id, "response": state.get("final_response")}
 
 

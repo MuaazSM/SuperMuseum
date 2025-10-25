@@ -11,6 +11,14 @@ class Language(str, Enum):
     TA = "tamil"
     TA_EN = "tamil-english"
     REGIONAL = "regional"
+    BN = "bengali"
+    KN = "kannada"
+    ML = "malayalam"
+    MR = "marathi"
+    OR = "odia"
+    PA = "punjabi"
+    TE = "telugu"
+    GU = "gujarati"
 
 
 class Emotion(str, Enum):

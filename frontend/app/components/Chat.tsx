@@ -1,14 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, MessageCircle, Music, Loader, AlertCircle, Volume2 } from 'lucide-react';
+import { Send, Sparkles, MessageCircle, Loader, AlertCircle, Volume2 } from 'lucide-react';
 import type { ChatMessage } from './types';
-import { MusicService } from '../services/musicService';
 import { ChatService } from '../services/chatService';
 import { TTSService } from '../services/ttsService';
-import { MusicPlaylistCard } from './MusicPlaylistCard';
 
 interface ChatProps {
   messages: ChatMessage[];
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, language?: string) => void;
   isLoading: boolean;
 }
 
@@ -20,6 +18,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
   // TTS state
   const [isSpeakingIndex, setIsSpeakingIndex] = useState<number | null>(null);
   const [ttsError, setTtsError] = useState<string | null>(null);
+  const [language, setLanguage] = useState<string>('english');
 
   // Sync with parent messages
   useEffect(() => {
@@ -46,7 +45,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
         await audio.play();
         return;
       }
-      const res = await TTSService.convert(msg.content, { language: 'english', speaker: 'anushka' });
+  const res = await TTSService.convert(msg.content, { language, speaker: 'anushka' });
       const updated = [...localMessages];
       updated[index] = { ...msg, voiceAudioUrl: res.url };
       setLocalMessages(updated);
@@ -60,28 +59,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
     }
   };
 
-  const detectMusicRequest = (message: string): boolean => {
-    const musicKeywords = [
-      'music', 'song', 'playlist', 'tune', 'melody', 'soundtrack',
-      'musical', 'raga', 'compose', 'generate music', 'create playlist',
-      'suggest songs', 'what music', 'background music', 'sangeet'
-    ];
-    
-    return musicKeywords.some(keyword => 
-      message.toLowerCase().includes(keyword)
-    );
-  };
-
-  const extractStoryContext = (msgs: ChatMessage[]): string => {
-    // Get last few user messages to build story context
-    const recentMessages = msgs
-      .filter(m => m.role === 'user')
-      .slice(-3)
-      .map(m => m.content)
-      .join(' ');
-    
-    return recentMessages || inputMessage;
-  };
+  // Music features removed from AI Guide
 
   const handleSendMessage = async (): Promise<void> => {
     if (!inputMessage.trim()) return;
@@ -89,51 +67,8 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
     const currentInput = inputMessage;
     setInputMessage('');
     
-    // Check if user is requesting music
-    const isMusicRequest = detectMusicRequest(currentInput);
-
-    if (isMusicRequest) {
-      // Handle music generation locally
-      setIsMusicGenerating(true);
-      
-      // Send the original message first
-      onSendMessage(currentInput);
-      
-      // Wait a bit for the parent to process
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Get story context from conversation
-      const storyContext = extractStoryContext([...localMessages, { role: 'user', content: currentInput }]);
-      
-      try {
-        // Generate music playlist
-        const playlist = await MusicService.generatePlaylist(
-          storyContext,
-          'Your Story'
-        );
-        
-        // Add music response with playlist to local state
-        const musicMessage: ChatMessage = {
-          role: 'assistant',
-          content: `🎵 I've curated a special ${playlist.musicalElements.genres[0]} playlist that captures the ${playlist.features.mood} essence of this narrative. Each song has been selected to reflect the cultural and emotional depth of the story.`,
-          musicPlaylist: playlist
-        };
-        
-        setLocalMessages(prev => [...prev, musicMessage]);
-      } catch (error) {
-        console.error('Error generating music:', error);
-        const errorMessage: ChatMessage = {
-          role: 'assistant',
-          content: '❌ I encountered an issue generating the music playlist. Please ensure the story context is clear and try again.'
-        };
-        setLocalMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsMusicGenerating(false);
-      }
-    } else {
-      // Regular message - let parent handle
-      onSendMessage(currentInput);
-    }
+    // Regular message - let parent handle
+    onSendMessage(currentInput, language);
   };
 
   const suggestedQuestions = [
@@ -142,25 +77,12 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
       icon: '📖'
     },
     {
-      text: 'What music suits the Mahabharata war?',
-      icon: '🎵'
-    },
-    {
       text: 'Explain the legend of Krishna',
       icon: '🪈'
     },
-    {
-      text: 'Create a playlist for Diwali celebration',
-      icon: '🪔'
-    },
-    {
-      text: 'Music for a peaceful meditation story',
-      icon: '🧘'
-    },
-    {
-      text: 'Tell me about Shiva and suggest music',
-      icon: '🎶'
-    }
+    { text: 'What are the Vedas?', icon: '📜' },
+    { text: 'Who is Devi Durga?', icon: '🕉️' },
+    { text: 'What is a yagna?', icon: '🔥' }
   ];
 
   return (
@@ -171,14 +93,9 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
         <MessageCircle className="w-8 h-8 animate-bounce relative z-10" />
         <div className="relative z-10">
           <h2 className="text-2xl font-bold">AI Museum Guide</h2>
-          <p className="text-sm text-amber-100">Ask about heritage • Request music playlists</p>
+          <p className="text-sm text-amber-100">Ask about heritage and culture</p>
         </div>
-        {isMusicGenerating && (
-          <div className="ml-auto relative z-10 flex items-center space-x-2 bg-white bg-opacity-20 px-4 py-2 rounded-full">
-            <Music className="w-5 h-5 animate-bounce" />
-            <span className="text-sm font-semibold">Composing...</span>
-          </div>
-        )}
+        {/* music status removed */}
       </div>
 
       {/* Messages Area */}
@@ -187,7 +104,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
           <div className="text-center py-8 animate-fadeIn">
             <div className="flex items-center justify-center space-x-3 mb-6">
               <Sparkles className="w-12 h-12 text-amber-600 animate-pulse" />
-              <Music className="w-12 h-12 text-purple-600 animate-pulse" style={{ animationDelay: '0.2s' }} />
+              {/* secondary icon removed */}
             </div>
             <h3 className="text-2xl font-bold text-stone-800 mb-2">
               Welcome to the AI Museum Guide
@@ -195,9 +112,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
             <p className="text-stone-600 mb-2">
               Ask me about Indian heritage, myths, or historical events
             </p>
-            <p className="text-amber-700 font-semibold mb-8">
-              ✨ New: Request music playlists for any story!
-            </p>
+            <p className="text-amber-700 font-semibold mb-8">✨ Tip: Use simple words. I’ll keep it concise.</p>
             
             {/* Suggested Questions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl mx-auto">
@@ -218,21 +133,12 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
               ))}
             </div>
 
-            {/* Feature Highlights */}
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+            {/* Feature Highlights (music removed) */}
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-1 gap-4 max-w-2xl mx-auto">
               <div className="bg-linear-to-br from-amber-50 to-orange-50 p-4 rounded-xl border-2 border-amber-200">
                 <MessageCircle className="w-8 h-8 text-amber-600 mb-2" />
                 <h4 className="font-bold text-amber-900 mb-1">Heritage Chat</h4>
-                <p className="text-sm text-amber-700">
-                  Learn about Indian ecology, culture, myths & history
-                </p>
-              </div>
-              <div className="bg-linear-to-br from-purple-50 to-pink-50 p-4 rounded-xl border-2 border-purple-200">
-                <Music className="w-8 h-8 text-purple-600 mb-2" />
-                <h4 className="font-bold text-purple-900 mb-1">Music Synthesis</h4>
-                <p className="text-sm text-purple-700">
-                  AI-curated playlists matching your story's essence
-                </p>
+                <p className="text-sm text-amber-700">Learn about Indian ecology, culture, myths & history</p>
               </div>
             </div>
           </div>
@@ -267,12 +173,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
                   </div>
                 </div>
 
-                {/* Music Playlist Card */}
-                {msg.musicPlaylist && (
-                  <div className="animate-slideUp" style={{ animationDelay: '0.3s' }}>
-                    <MusicPlaylistCard playlist={msg.musicPlaylist} />
-                  </div>
-                )}
+                {/* Music card removed */}
                 {/* Voice audio playback */}
                 {msg.voiceAudioUrl && (
                   <div className="mt-2 animate-fadeIn">
@@ -285,26 +186,14 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
         )}
         
         {/* Loading Indicator */}
-        {(isLoading || isMusicGenerating) && (
+        {isLoading && (
           <div className="flex justify-start animate-fadeIn">
             <div className="bg-white rounded-2xl p-4 shadow-md border-2 border-stone-200">
-              {isMusicGenerating ? (
-                <div className="flex items-center space-x-3">
-                  <Music className="w-5 h-5 text-purple-600 animate-spin" />
-                  <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  </div>
-                  <span className="text-sm text-purple-700 font-medium">Generating music...</span>
-                </div>
-              ) : (
                 <div className="flex space-x-2">
                   <div className="w-3 h-3 bg-amber-600 rounded-full animate-bounce"></div>
                   <div className="w-3 h-3 bg-amber-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                   <div className="w-3 h-3 bg-amber-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                 </div>
-              )}
             </div>
           </div>
         )}
@@ -324,6 +213,27 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
             className="flex-1 px-5 py-4 border-2 border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-600 focus:border-transparent bg-white transition-all duration-300"
             disabled={isLoading || isMusicGenerating}
           />
+          <select
+            className="px-3 py-2 border-2 border-stone-300 rounded-xl bg-white text-sm"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            title="Language"
+          >
+            <option value="english">English</option>
+            <option value="hindi">Hindi</option>
+            <option value="hinglish">Hinglish</option>
+            <option value="tamil">Tamil</option>
+            <option value="tamil-english">Tamil-English</option>
+            <option value="bengali">Bengali</option>
+            <option value="kannada">Kannada</option>
+            <option value="malayalam">Malayalam</option>
+            <option value="marathi">Marathi</option>
+            <option value="odia">Odia</option>
+            <option value="punjabi">Punjabi</option>
+            <option value="telugu">Telugu</option>
+            <option value="gujarati">Gujarati</option>
+            <option value="regional">Regional</option>
+          </select>
           <button
             onClick={handleSendMessage}
             disabled={isLoading || isMusicGenerating || !inputMessage.trim()}
@@ -346,7 +256,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
         <div className="mt-3 flex items-start space-x-2 text-xs text-stone-600">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <p>
-            <span className="font-semibold">Tip:</span> Mention "music", "playlist", or "songs" in your message to generate a curated musical journey for any story!
+            <span className="font-semibold">Tip:</span> Use the language dropdown to receive answers in your preferred language.
           </p>
         </div>
       </div>

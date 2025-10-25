@@ -35,13 +35,22 @@ class ConversationAgent:
             parts.append(f"Source: {src}\n{content}")
         return "\n\n---\n\n".join(parts)
 
-    async def handle_text(self, session_id: str, text: str, history: Optional[List[str]] = None, channel: str = "text") -> Dict[str, Any]:
+    async def handle_text(
+        self,
+        session_id: str,
+        text: str,
+        history: Optional[List[str]] = None,
+        channel: str = "text",
+        language: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """process text input and return final response state.
 
         this method runs the sub-agents in sequence. In production this should be
         implemented as a LangGraph workflow with branching and memory.
         """
         state: Dict[str, Any] = {"session_id": session_id, "user_input": text}
+        if language:
+            state["language"] = language
         state = await self.emotion_agent.run(state)
         state = await self.lang_router.run(state)
         state = await self.rag_agent.run(state)
@@ -65,7 +74,16 @@ class ConversationAgent:
                 self._llm = ModelLoader().load_llm()
             prompt = ChatPromptTemplate.from_template(tmpl)
             chain = prompt | self._llm | StrOutputParser()
-            final_response = chain.invoke({"context": context, "message": text})
+            # prefer explicit language provided; else detected language from state
+            lang_var = language or state.get("language") or ""
+            logger.info(f"conversation_agent: prompting with target language='{lang_var}'")
+            # Hard enforcement: inject a strict controller when language is specified
+            user_msg = text
+            if lang_var:
+                user_msg = (
+                    f"(IMPORTANT: Respond strictly in '{lang_var}'. Do not switch languages or translate.)\n" + text
+                )
+            final_response = chain.invoke({"context": context, "message": user_msg, "language": lang_var})
 
         # optional music intent bridge
         try:

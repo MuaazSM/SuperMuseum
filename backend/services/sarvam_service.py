@@ -25,6 +25,10 @@ LANGUAGE_CODE_MAP = {
     "telugu": "te-IN",
     "gujarati": "gu-IN",
     "english": "en-IN",
+    # fallbacks for mixed/aliases
+    "hinglish": "en-IN",
+    "tamil-english": "ta-IN",
+    "regional": "en-IN",
 }
 
 # available speakers (from current API validation error)

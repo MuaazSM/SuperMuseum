@@ -16,9 +16,10 @@ export class ChatService {
    * Send a text message to the backend chat endpoint.
    * Returns the parsed JSON from the backend which should include session_id and response.
    */
-  static async sendText(message: string, sessionId?: string): Promise<{ session_id?: string; response?: string }> {
+  static async sendText(message: string, sessionId?: string, language?: string): Promise<{ session_id?: string; response?: string }> {
     const payload: Record<string, any> = { message };
     if (sessionId) payload.session_id = sessionId;
+    if (language) payload.language = language;
 
     const resp = await fetch(`${API_BASE_URL}/api/chat/text`, {
       method: 'POST',
