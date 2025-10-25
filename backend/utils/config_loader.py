@@ -4,6 +4,7 @@ lowercase: resolves config path via explicit arg, env var, or default path.
 """
 from pathlib import Path
 import os
+from typing import Optional
 import yaml
 
 
@@ -12,7 +13,7 @@ def _project_root() -> Path:
 	return Path(__file__).resolve().parents[1]
 
 
-def load_config(config_path: str | None = None) -> dict:
+def load_config(config_path: Optional[str] = None) -> dict:
 	"""load YAML config with robust path resolution.
 
 	priority: explicit arg > CONFIG_PATH env > <project_root>/config/config.yaml
