@@ -10,7 +10,9 @@ faster-whisper
 chromadb
 sarvamai
 langchain
+langchain-core
 langchain-community
 langchain-google-genai
 langchain-groq
 langgraph
+PyYAML

@@ -1,5 +1,5 @@
 """conversation agent that orchestrates agents to produce final response."""
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 from agents.emotion_agent import EmotionAgent
 from agents.language_router import LanguageRouterAgent
 from agents.rag_agent import RAGAgent
@@ -35,7 +35,7 @@ class ConversationAgent:
             parts.append(f"Source: {src}\n{content}")
         return "\n\n---\n\n".join(parts)
 
-    async def handle_text(self, session_id: str, text: str, history: list[str] | None = None) -> Dict[str, Any]:
+    async def handle_text(self, session_id: str, text: str, history: Optional[List[str]] = None) -> Dict[str, Any]:
         """process text input and return final response state.
 
         this method runs the sub-agents in sequence. In production this should be
