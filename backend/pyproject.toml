@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "supermuseum-backend"
+version = "0.1.0"
+description = "SuperMuseum FastAPI backend"
+authors = [{ name = "SuperMuseum Team" }]
+readme = "README.md"
+requires-python = ">=3.10,<3.11"
+license = { text = "MIT" }
+keywords = ["fastapi", "museum", "ai", "rag", "tts", "saavn"]
+
+# Runtime dependencies (mirrors requirements.txt)
+dependencies = [
+  "fastapi==0.116.1",
+  "uvicorn[standard]==0.35.0",
+  "httpx==0.28.1",
+  "python-multipart==0.0.20",
+  "pydantic==2.9.2",
+  "pydantic-settings==2.11.0",
+  "transformers==4.57.1",
+  "torch==2.9.0",
+  "faster-whisper==1.2.0",
+  "chromadb==1.2.1",
+  "sarvamai==0.1.21",
+  "langchain==0.3.27",
+  "langchain-core==0.3.75",
+  "langchain-community==0.3.30",
+  "langchain-google-genai==2.1.12",
+  "langchain-groq==0.3.6",
+  "langgraph==0.6.7",
+  "PyYAML==6.0.2",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.isort]
+profile = "black"
