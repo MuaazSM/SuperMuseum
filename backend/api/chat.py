@@ -4,6 +4,7 @@ from models.schemas import TextChatRequest, VoiceChatResponse
 from workflows.chat_workflow import chat_workflow
 from services.whisper_service import transcribe_audio
 from services.sarvam_service import synthesize_text
+import base64
 import uuid
 import shutil
 from pathlib import Path
@@ -24,7 +25,7 @@ async def chat_text(req: TextChatRequest):
 
 @router.post("/voice")
 async def chat_voice(file: UploadFile = File(...)) -> VoiceChatResponse:
-    """accept audio file, transcribe, detect emotion and return tts url."""
+    """accept audio file, transcribe, detect emotion and return synthesized audio."""
     # save to temp
     temp_dir = Path(settings.audio_temp_dir)
     temp_dir.mkdir(parents=True, exist_ok=True)
@@ -41,18 +42,23 @@ async def chat_voice(file: UploadFile = File(...)) -> VoiceChatResponse:
     session_id = str(uuid.uuid4())
     state = await chat_workflow.run(session_id, text)
 
-    # synthesize response using sarvam (if configured)
-    tts_url = None
+    # synthesize response using Sarvam (if configured)
+    audio_b64 = None
     try:
-        tts_url = await synthesize_text(state.get("final_response", ""), language=state.get("language", "english"))
-    except Exception:
-        logger.debug("sarvam synthesis failed or not configured")
+        audio_bytes = await synthesize_text(
+            state.get("final_response", ""),
+            language=state.get("language", "english"),
+        )
+        audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
+    except Exception as e:
+        logger.debug(f"sarvam synthesis failed or not configured: {e}")
 
     return VoiceChatResponse(
         transcript=text,
         language=transcribed.get("language", "english"),
         emotion=state.get("emotion", {}).get("label", "curious"),
-        tts_url=tts_url,
+        tts_url=None,
+        audio_base64=audio_b64,
         confidence=transcribed.get("confidence", 0.0),
     )
 

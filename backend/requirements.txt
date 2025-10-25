@@ -12,6 +12,7 @@ torch>=2.0
 chromadb>=0.4
 qdrant-client>=1.7
 pydantic>=1.10
+pydantic-settings>=2.0
 httpx>=0.24
 python-multipart>=0.0.6
 pydub>=0.25
@@ -22,10 +23,8 @@ beautifulsoup4==4.13.5
 fastapi==0.116.1
 html5lib==1.1
 jinja2==3.1.6
-langchain==0.3.27
 langchain-astradb==0.6.1
 langchain_core==0.3.75
-langchain-google-genai==2.1.8
 langchain-groq==0.3.6
 lxml==6.0.1
 python-dotenv==1.1.1
@@ -36,3 +35,4 @@ undetected-chromedriver==3.5.5
 uvicorn==0.35.0
 structlog==25.4.0
 langgraph==0.6.7
+sarvamai>=0.1.0

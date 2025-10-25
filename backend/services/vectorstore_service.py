@@ -99,12 +99,14 @@ class VectorStore:
         synchronous wrapper to keep compatibility with existing agents.
         """
         retriever = self.load_retriever(top_k=top_k)
-        # LangChain retrievers typically expose get_relevant_documents
+        # prefer modern invoke API; fall back to legacy methods
         try:
-            docs = retriever.get_relevant_documents(query)
-        except AttributeError:
-            # some retriever implementations may use .retrieve
-            docs = retriever.retrieve(query)
+            docs = retriever.invoke(query)  # type: ignore[attr-defined]
+        except Exception:
+            try:
+                docs = retriever.get_relevant_documents(query)
+            except AttributeError:
+                docs = retriever.retrieve(query)
         return docs
 
 

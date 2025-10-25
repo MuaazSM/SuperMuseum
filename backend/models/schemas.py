@@ -19,7 +19,29 @@ class VoiceChatResponse(BaseModel):
     language: str
     emotion: Emotion
     tts_url: Optional[str] = None
+    audio_base64: Optional[str] = None
     confidence: Optional[float] = None
+
+
+class TTSRequest(BaseModel):
+    """request body for direct text-to-speech conversion."""
+
+    text: str
+    language: Optional[str] = Field(default="english")
+    speaker: Optional[str] = Field(default=None)
+    pitch: Optional[float] = Field(default=0.0)
+    pace: Optional[float] = Field(default=1.0)
+    loudness: Optional[float] = Field(default=1.0)
+    enable_preprocessing: Optional[bool] = Field(default=True)
+    model: Optional[str] = Field(default="bulbul:v2")
+
+
+class TTSResponse(BaseModel):
+    """response with base64-encoded audio for TTS conversion."""
+
+    audio_base64: str
+    language: str
+    speaker: Optional[str] = None
 
 
 class MusicAnalyzeRequest(BaseModel):

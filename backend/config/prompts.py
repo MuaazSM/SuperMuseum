@@ -33,8 +33,12 @@ PROMPTS: Dict[PromptType, PromptTemplate] = {
     PromptType.MUSIC_ANALYSIS: PromptTemplate(
         template=(
             "You are a musicologist with deep understanding of Indian classical and folk traditions."
-            " Based on the story text below, extract mood, era, region, primary emotions, and recommend ragas, instruments, genres and short justification.\n\n"
-            "STORY:\n{text}\n\nOUTPUT:" 
+            " Based on the story text below, perform cultural music analysis and return ONLY valid JSON with no commentary."
+            " Use concise values.\n\n"
+            "Required JSON keys: mood (string), era (string), region (string), emotions (array of strings), themes (array of strings),"
+            " ragas (array of strings), instruments (array of strings), genres (array of strings).\n\n"
+            "STORY:\n{text}\n\n"
+            "JSON:"
         ),
         description="music analysis for story-to-music mapping",
     ),

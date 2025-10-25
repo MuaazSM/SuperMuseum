@@ -4,7 +4,7 @@ lowercase: this module wires API routers and starts the ASGI app.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import chat, music, health
+from api import chat, music, health, tts
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +23,7 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api/chat")
 app.include_router(music.router, prefix="/api/music")
 app.include_router(health.router, prefix="/api")
+app.include_router(tts.router, prefix="/api/tts")
 
 
 @app.on_event("startup")
