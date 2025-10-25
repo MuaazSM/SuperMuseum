@@ -1,0 +1,100 @@
+# Python dependencies
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.whl
+*.egg-info/
+*.eggs/
+Pipfile
+Pipfile.lock
+poetry.lock
+
+# Virtual environments
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# GenAI-related files
+*.ckpt
+*.pth
+*.h5
+*.onnx
+*.tflite
+*.pt
+
+# Cache files
+.cache/
+*.cache
+
+# Pytest
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+*.cover
+
+# Miscellaneous
+*.bak
+*.swp
+*.tmp
+
+.env
+
+archive/
+
+.vscode/
+logs/
+
+# os-specific
+.DS_Store
+
+# editor/project files
+.idea/
+*.code-workspace
+
+# python build artifacts
+build/
+dist/
+.eggs/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# env files (keep examples)
+**/.env
+**/.env.*
+!.env.example
+!backend/.env.example
+
+# backend data and temp
+backend/data/chroma/
+backend/tmp/
+backend/logs/
+tmp/
+
+# backend temp audio artifacts
+backend/tmp/**/*.wav
+backend/tmp/**/*.mp3
+backend/tmp/**/*.webm
+
+# frontend artifacts
+frontend/node_modules/
+frontend/dist/
+
+# sqlite databases
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# chroma vector store folders (generic)
+**/chroma/
