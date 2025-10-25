@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "main.py"
+    }
+  ],
+  "env": {
+    "GOOGLE_API_KEY": "",
+    "GROQ_API_KEY": "",
+    "SARVAM_API_KEY": "",
+    "REDIS_URL": "",
+    "SAAVN_API_KEY": "",
+    "SAAVN_API_BASE": "https://saavn.sumit.co/api"
+  }
+}

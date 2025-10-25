@@ -98,3 +98,4 @@ frontend/dist/
 
 # chroma vector store folders (generic)
 **/chroma/
+.vercel
