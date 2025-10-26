@@ -31,6 +31,22 @@ const MuseumMap: React.FC = () => {
 
     const room = rooms.find(r => r.id === currentRoom)!;
 
+    // Helper function to clean API response text
+    const cleanResponseText = (text: string): string => {
+        if (!text) return text;
+        
+        return text
+            // Remove asterisks used for emphasis/bold
+            .replace(/\*\*/g, '')
+            .replace(/\*/g, '')
+            // Remove underscores used for emphasis/italic
+            .replace(/__/g, '')
+            .replace(/_/g, '')
+            // Remove extra whitespace
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+
     // Spritesheet dimensions
     const SPRITE_WIDTH = 102;
     const SPRITE_HEIGHT = 153;
