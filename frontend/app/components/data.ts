@@ -1,4 +1,4 @@
-import { TreePine, Waves, Mountain, Sun, Users, Palette, Music, Building, Home, Sparkles, BookOpen, Sprout, Leaf, Heart, MessageCircle } from 'lucide-react';
+import { TreePine, Waves, Mountain, Sun, Users, Palette, Music, Building, Home, Sparkles, BookOpen, Sprout, Leaf, Heart, MessageCircle, Map } from 'lucide-react';
 import type { Exhibit, GalleryCard } from './types';
 
 export const sections: Record<string, Exhibit[]> = {
@@ -150,8 +150,6 @@ export const galleryCards: GalleryCard[] = [
 
 export const navSections = [
   { id: 'home', label: 'Home', icon: Home },
-  { id: 'ecology', label: 'Ecology', icon: Leaf },
-  { id: 'culture', label: 'Culture', icon: Palette },
-  { id: 'social', label: 'Social', icon: Heart },
-  { id: 'chat', label: 'AI Guide', icon: MessageCircle },
+  { id: 'map', label: 'Museum Map', icon: Map },
+  { id: 'chat', label: 'Chat', icon: MessageCircle },
 ];

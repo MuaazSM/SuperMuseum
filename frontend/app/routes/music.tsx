@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Footer } from '../components/Footer';
 import { SongCard } from '../components/SongCard';
 import type { Song } from '../components/types';
 import { MusicService } from '../services/musicService';
@@ -60,7 +59,6 @@ export default function MusicPage() {
           ))}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

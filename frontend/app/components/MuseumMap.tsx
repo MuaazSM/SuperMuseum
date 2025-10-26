@@ -392,10 +392,13 @@ const MuseumMap: React.FC = () => {
             )}
 
             {/* Instructions */}
-            <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 p-3 rounded-lg shadow-lg">
-                <p className="text-sm text-gray-700">
-                    Use arrow keys to move. Press Space or Enter near points of interest or doors to interact.
-                    Press Esc to close information or chat.
+            <div className="absolute bottom-2 left-4 p-3">
+                <p className="rubik-doodle-shadow text-sm text-white font-medium drop-shadow-lg [text-shadow:1px_1px_2px_rgba(0,0,0,0.7)]">
+                    Use arrow keys to move. 
+                    <br />
+                    Press Space/Enter near points of interest or doors to interact.
+                    <br />
+                    Press Esc to close information.
                 </p>
             </div>
         </div>

@@ -4,7 +4,6 @@ import { Home } from '../components/Home';
 import { Exhibits } from '../components/Exhibits';
 import { Chat } from '../components/Chat';
 import { ChatService } from '../services/chatService';
-import { Footer } from '../components/Footer';
 import { ExhibitModal } from '../components/ExhibitModal';
 import { sections, galleryCards, navSections } from '../components/data';
 import type { ChatMessage, Particle, Exhibit } from '../components/types';
@@ -159,8 +158,6 @@ export default function IndianMuseum() {
       <main className="max-w-7xl">
         {renderContent()}
       </main>
-
-      <Footer />
 
       {selectedExhibit && (
         <ExhibitModal 
