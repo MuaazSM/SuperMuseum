@@ -156,7 +156,7 @@ export default function IndianMuseum() {
         navSections={navSections}
       />
 
-      <main className="max-w-7xl sm:px-6 lg:px-8">
+      <main className="max-w-7xl">
         {renderContent()}
       </main>
 
