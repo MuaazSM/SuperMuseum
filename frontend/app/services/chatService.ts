@@ -13,6 +13,24 @@ export interface VoiceChatResponse {
 
 export class ChatService {
   /**
+   * Helper function to clean API response text by removing markdown formatting
+   */
+  private static cleanResponseText(text: string): string {
+    if (!text) return text;
+    
+    return text
+      // Remove asterisks used for emphasis/bold
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      // Remove underscores used for emphasis/italic
+      .replace(/__/g, '')
+      .replace(/_/g, '')
+      // Remove extra whitespace
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
    * Send a text message to the backend chat endpoint.
    * Returns the parsed JSON from the backend which should include session_id and response.
    */
