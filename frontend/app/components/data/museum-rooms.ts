@@ -34,8 +34,8 @@ export const rooms: Room[] = [
         doors: [
             {
                 id: 'culture-door',
-                x: 200,
-                y: 100,
+                x: 370,
+                y: 50,
                 width: 60,
                 height: 80,
                 leadsTo: 'cultural',
@@ -43,8 +43,8 @@ export const rooms: Room[] = [
             },
             {
                 id: 'ecology-door',
-                x: 500,
-                y: 100,
+                x: 650,
+                y: 50,
                 width: 60,
                 height: 80,
                 leadsTo: 'ecology',
@@ -52,8 +52,8 @@ export const rooms: Room[] = [
             },
             {
                 id: 'history-door',
-                x: 800,
-                y: 100,
+                x: 970,
+                y: 50,
                 width: 60,
                 height: 80,
                 leadsTo: 'history',
@@ -79,8 +79,8 @@ export const rooms: Room[] = [
         doors: [
             {
                 id: 'main-door',
-                x: 480,
-                y: 80,
+                x: 650,
+                y: 50,
                 width: 60,
                 height: 80,
                 leadsTo: 'main',
@@ -99,7 +99,7 @@ export const rooms: Room[] = [
             },
             {
                 id: 3,
-                x: 500,
+                x: 1100,
                 y: 200,
                 title: "Traditional Music",
                 description: "Experience the rich heritage of Indian classical music, including both Hindustani and Carnatic traditions.",
@@ -115,8 +115,8 @@ export const rooms: Room[] = [
         doors: [
             {
                 id: 'main-door',
-                x: 480,
-                y: 80,
+                x: 650,
+                y: 50,
                 width: 60,
                 height: 80,
                 leadsTo: 'main',
@@ -135,7 +135,7 @@ export const rooms: Room[] = [
             },
             {
                 id: 5,
-                x: 700,
+                x: 1100,
                 y: 200,
                 title: "Himalayan Ecosystem",
                 description: "Discover the unique ecosystem of the Himalayas and its importance to India's environment.",
@@ -151,8 +151,8 @@ export const rooms: Room[] = [
         doors: [
             {
                 id: 'main-door',
-                x: 480,
-                y: 80,
+                x: 650,
+                y: 50,
                 width: 60,
                 height: 80,
                 leadsTo: 'main',
@@ -171,7 +171,7 @@ export const rooms: Room[] = [
             },
             {
                 id: 7,
-                x: 750,
+                x: 1100,
                 y: 200,
                 title: "Royal Artifacts",
                 description: "Explore precious artifacts from India's royal dynasties and their historical significance.",

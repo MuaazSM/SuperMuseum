@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-gradient-to-r from-stone-900 to-stone-800 text-white py-12 mt-20 border-t-4 border-amber-600">
+    <footer className="bg-gradient-to-r from-stone-900 to-stone-800 text-white py-12 border-t-4 border-amber-600">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-3 gap-8 mb-8">
           <div className="animate-fadeIn">

@@ -7,14 +7,39 @@ interface Position {
     y: number;
 }
 
+type Direction = 'down' | 'left' | 'right' | 'up';
+
 const MuseumMap: React.FC = () => {
     const [position, setPosition] = useState<Position>({ x: 500, y: 450 });
     const [activePoint, setActivePoint] = useState<number | null>(null);
     const [currentRoom, setCurrentRoom] = useState('main');
+    const [direction, setDirection] = useState<Direction>('down');
+    const [frame, setFrame] = useState(0);
+    const [isMoving, setIsMoving] = useState(false);
+    
     const moveSpeed = 10;
     const interactionRadius = 50;
 
     const room = rooms.find(r => r.id === currentRoom)!;
+
+    // Spritesheet dimensions
+    const SPRITE_WIDTH = 102;
+    const SPRITE_HEIGHT = 153;
+    const FRAMES_PER_DIRECTION = 4;
+
+    // Animation frame update
+    useEffect(() => {
+        if (!isMoving) {
+            setFrame(0); // Reset to idle frame when not moving
+            return;
+        }
+
+        const animationInterval = setInterval(() => {
+            setFrame(prev => (prev + 1) % FRAMES_PER_DIRECTION);
+        }, 150); // Change frame every 150ms for smooth animation
+
+        return () => clearInterval(animationInterval);
+    }, [isMoving]);
 
     const handleKeyPress = useCallback((event: KeyboardEvent) => {
         if (event.key === 'Escape') {
@@ -22,32 +47,40 @@ const MuseumMap: React.FC = () => {
             return;
         }
 
-        // Prevent default browser scrolling for movement and interaction keys.
-        // Note: Space is reported as ' ' in event.key on most browsers, so include
-        // checks for both the actual space character and event.code === 'Space'.
+        // Prevent default browser scrolling
         if (
             ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(event.key) ||
             event.key === ' ' ||
-            event.key === 'Spacebar' || // older browsers
+            event.key === 'Spacebar' ||
             event.code === 'Space'
         ) {
             event.preventDefault();
         }
 
         let newPosition = { ...position };
+        let moved = false;
+        let newDirection = direction;
 
         switch (event.key) {
             case 'ArrowUp':
                 newPosition.y = Math.max(0, position.y - moveSpeed);
+                newDirection = 'up';
+                moved = true;
                 break;
             case 'ArrowDown':
                 newPosition.y = Math.min(540, position.y + moveSpeed);
+                newDirection = 'down';
+                moved = true;
                 break;
             case 'ArrowLeft':
                 newPosition.x = Math.max(0, position.x - moveSpeed);
+                newDirection = 'left';
+                moved = true;
                 break;
             case 'ArrowRight':
-                newPosition.x = Math.min(940, position.x + moveSpeed);
+                newPosition.x = Math.min(1400, position.x + moveSpeed);
+                newDirection = 'right';
+                moved = true;
                 break;
             case 'Enter':
             case ' ':
@@ -80,24 +113,45 @@ const MuseumMap: React.FC = () => {
                     }
                 }
                 break;
-
-                break;
         }
 
-        setPosition(newPosition);
-    }, [position, currentRoom]);
+        if (moved) {
+            setPosition(newPosition);
+            setDirection(newDirection);
+            setIsMoving(true);
+        }
+    }, [position, currentRoom, direction, room.doors, room.interactivePoints]);
+
+    const handleKeyUp = useCallback((event: KeyboardEvent) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+            setIsMoving(false);
+        }
+    }, []);
 
     useEffect(() => {
         window.addEventListener('keydown', handleKeyPress);
+        window.addEventListener('keyup', handleKeyUp);
         return () => {
             window.removeEventListener('keydown', handleKeyPress);
+            window.removeEventListener('keyup', handleKeyUp);
         };
-    }, [handleKeyPress]);
+    }, [handleKeyPress, handleKeyUp]);
+
+    // Calculate sprite position
+    const directionToRow: Record<Direction, number> = {
+        down: 0,
+        left: 2,
+        right: 3,
+        up: 1
+    };
+
+    const spriteX = frame * SPRITE_WIDTH;
+    const spriteY = directionToRow[direction] * SPRITE_HEIGHT;
 
     const activePointData = room.interactivePoints.find(p => p.id === activePoint);
 
     return (
-        <div className="relative w-[1000px] h-[600px] mx-auto border-2 border-gray-300 overflow-hidden">
+        <div className="relative w-screen h-screen border-2 border-gray-300 overflow-hidden">
             <img 
                 src={room.image}
                 alt={`${room.name} View`}
@@ -171,15 +225,29 @@ const MuseumMap: React.FC = () => {
                 );
             })}
 
-            {/* Player Character */}
-            <div 
-                className="absolute w-8 h-8 bg-blue-500 rounded-full transition-all duration-100 ease-in-out"
+            {/* Animated Player Character using spritesheet */}
+            <div
+                className="absolute"
                 style={{
                     left: `${position.x}px`,
                     top: `${position.y}px`,
-                    transform: 'translate(-50%, -50%)'
+                    transform: 'translate(-50%, -50%)',
+                    width: `${SPRITE_WIDTH}px`,
+                    height: `${SPRITE_HEIGHT}px`,
+                    pointerEvents: 'none'
                 }}
-            />
+            >
+                <div
+                    style={{
+                        width: `${SPRITE_WIDTH}px`,
+                        height: `${SPRITE_HEIGHT}px`,
+                        backgroundImage: `url(/assets/player-spritesheet.png)`,
+                        backgroundPosition: `-${spriteX}px -${spriteY}px`,
+                        backgroundRepeat: 'no-repeat',
+                        imageRendering: 'pixelated'
+                    }}
+                />
+            </div>
 
             {/* Information Modal */}
             {activePointData && (

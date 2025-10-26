@@ -1,0 +1,184 @@
+<svg width="384" height="288" xmlns="http://www.w3.org/2000/svg">
+  <!-- This is a 4x4 spritesheet (4 frames x 4 directions) -->
+  <!-- Each frame is 96x72 pixels -->
+  <!-- Row 0: Walking Down -->
+  <!-- Row 1: Walking Left -->
+  <!-- Row 2: Walking Right -->
+  <!-- Row 3: Walking Up -->
+  
+  <!-- Walking Down - Frame 0 (Idle) -->
+  <g id="down-0">
+    <!-- Body -->
+    <ellipse cx="48" cy="50" rx="18" ry="22" fill="#4A90E2"/>
+    <!-- Head -->
+    <circle cx="48" cy="28" r="12" fill="#FFD4A3"/>
+    <!-- Eyes -->
+    <circle cx="44" cy="26" r="2" fill="#333"/>
+    <circle cx="52" cy="26" r="2" fill="#333"/>
+    <!-- Mouth -->
+    <path d="M 44 32 Q 48 34 52 32" stroke="#333" fill="none" stroke-width="1"/>
+    <!-- Legs -->
+    <rect x="42" y="65" width="5" height="6" fill="#2C5F8D"/>
+    <rect x="49" y="65" width="5" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Down - Frame 1 (Left foot forward) -->
+  <g id="down-1" transform="translate(96, 0)">
+    <ellipse cx="48" cy="50" rx="18" ry="22" fill="#4A90E2"/>
+    <circle cx="48" cy="28" r="12" fill="#FFD4A3"/>
+    <circle cx="44" cy="26" r="2" fill="#333"/>
+    <circle cx="52" cy="26" r="2" fill="#333"/>
+    <path d="M 44 32 Q 48 34 52 32" stroke="#333" fill="none" stroke-width="1"/>
+    <!-- Left leg forward -->
+    <rect x="40" y="65" width="5" height="6" fill="#2C5F8D"/>
+    <rect x="50" y="63" width="5" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Down - Frame 2 (Idle) -->
+  <g id="down-2" transform="translate(192, 0)">
+    <ellipse cx="48" cy="50" rx="18" ry="22" fill="#4A90E2"/>
+    <circle cx="48" cy="28" r="12" fill="#FFD4A3"/>
+    <circle cx="44" cy="26" r="2" fill="#333"/>
+    <circle cx="52" cy="26" r="2" fill="#333"/>
+    <path d="M 44 32 Q 48 34 52 32" stroke="#333" fill="none" stroke-width="1"/>
+    <rect x="42" y="65" width="5" height="6" fill="#2C5F8D"/>
+    <rect x="49" y="65" width="5" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Down - Frame 3 (Right foot forward) -->
+  <g id="down-3" transform="translate(288, 0)">
+    <ellipse cx="48" cy="50" rx="18" ry="22" fill="#4A90E2"/>
+    <circle cx="48" cy="28" r="12" fill="#FFD4A3"/>
+    <circle cx="44" cy="26" r="2" fill="#333"/>
+    <circle cx="52" cy="26" r="2" fill="#333"/>
+    <path d="M 44 32 Q 48 34 52 32" stroke="#333" fill="none" stroke-width="1"/>
+    <!-- Right leg forward -->
+    <rect x="41" y="63" width="5" height="6" fill="#2C5F8D"/>
+    <rect x="51" y="65" width="5" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Left - Frame 0 (Idle) -->
+  <g id="left-0" transform="translate(0, 72)">
+    <ellipse cx="48" cy="50" rx="20" ry="22" fill="#4A90E2"/>
+    <!-- Head (side view) -->
+    <ellipse cx="42" cy="28" rx="11" ry="12" fill="#FFD4A3"/>
+    <!-- Eye -->
+    <circle cx="40" cy="26" r="2" fill="#333"/>
+    <!-- Ear -->
+    <ellipse cx="50" cy="28" rx="3" ry="4" fill="#FFD4A3"/>
+    <!-- Legs (side view) -->
+    <rect x="44" y="65" width="6" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Left - Frame 1 -->
+  <g id="left-1" transform="translate(96, 72)">
+    <ellipse cx="48" cy="50" rx="20" ry="22" fill="#4A90E2"/>
+    <ellipse cx="42" cy="28" rx="11" ry="12" fill="#FFD4A3"/>
+    <circle cx="40" cy="26" r="2" fill="#333"/>
+    <ellipse cx="50" cy="28" rx="3" ry="4" fill="#FFD4A3"/>
+    <!-- Left leg forward -->
+    <rect x="42" y="64" width="6" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Left - Frame 2 (Idle) -->
+  <g id="left-2" transform="translate(192, 72)">
+    <ellipse cx="48" cy="50" rx="20" ry="22" fill="#4A90E2"/>
+    <ellipse cx="42" cy="28" rx="11" ry="12" fill="#FFD4A3"/>
+    <circle cx="40" cy="26" r="2" fill="#333"/>
+    <ellipse cx="50" cy="28" rx="3" ry="4" fill="#FFD4A3"/>
+    <rect x="44" y="65" width="6" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Left - Frame 3 -->
+  <g id="left-3" transform="translate(288, 72)">
+    <ellipse cx="48" cy="50" rx="20" ry="22" fill="#4A90E2"/>
+    <ellipse cx="42" cy="28" rx="11" ry="12" fill="#FFD4A3"/>
+    <circle cx="40" cy="26" r="2" fill="#333"/>
+    <ellipse cx="50" cy="28" rx="3" ry="4" fill="#FFD4A3"/>
+    <!-- Right leg forward -->
+    <rect x="46" y="64" width="6" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Right - Frame 0 (Idle) -->
+  <g id="right-0" transform="translate(0, 144)">
+    <ellipse cx="48" cy="50" rx="20" ry="22" fill="#4A90E2"/>
+    <!-- Head (side view facing right) -->
+    <ellipse cx="54" cy="28" rx="11" ry="12" fill="#FFD4A3"/>
+    <!-- Eye -->
+    <circle cx="56" cy="26" r="2" fill="#333"/>
+    <!-- Ear -->
+    <ellipse cx="46" cy="28" rx="3" ry="4" fill="#FFD4A3"/>
+    <!-- Legs (side view) -->
+    <rect x="46" y="65" width="6" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Right - Frame 1 -->
+  <g id="right-1" transform="translate(96, 144)">
+    <ellipse cx="48" cy="50" rx="20" ry="22" fill="#4A90E2"/>
+    <ellipse cx="54" cy="28" rx="11" ry="12" fill="#FFD4A3"/>
+    <circle cx="56" cy="26" r="2" fill="#333"/>
+    <ellipse cx="46" cy="28" rx="3" ry="4" fill="#FFD4A3"/>
+    <!-- Right leg forward -->
+    <rect x="48" y="64" width="6" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Right - Frame 2 (Idle) -->
+  <g id="right-2" transform="translate(192, 144)">
+    <ellipse cx="48" cy="50" rx="20" ry="22" fill="#4A90E2"/>
+    <ellipse cx="54" cy="28" rx="11" ry="12" fill="#FFD4A3"/>
+    <circle cx="56" cy="26" r="2" fill="#333"/>
+    <ellipse cx="46" cy="28" rx="3" ry="4" fill="#FFD4A3"/>
+    <rect x="46" y="65" width="6" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Right - Frame 3 -->
+  <g id="right-3" transform="translate(288, 144)">
+    <ellipse cx="48" cy="50" rx="20" ry="22" fill="#4A90E2"/>
+    <ellipse cx="54" cy="28" rx="11" ry="12" fill="#FFD4A3"/>
+    <circle cx="56" cy="26" r="2" fill="#333"/>
+    <ellipse cx="46" cy="28" rx="3" ry="4" fill="#FFD4A3"/>
+    <!-- Left leg forward -->
+    <rect x="44" y="64" width="6" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Up - Frame 0 (Idle) -->
+  <g id="up-0" transform="translate(0, 216)">
+    <ellipse cx="48" cy="50" rx="18" ry="22" fill="#4A90E2"/>
+    <!-- Head (back view) -->
+    <circle cx="48" cy="28" r="12" fill="#8B6F47"/>
+    <!-- Hair -->
+    <ellipse cx="48" cy="24" rx="13" ry="8" fill="#5C4033"/>
+    <!-- Legs -->
+    <rect x="42" y="65" width="5" height="6" fill="#2C5F8D"/>
+    <rect x="49" y="65" width="5" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Up - Frame 1 -->
+  <g id="up-1" transform="translate(96, 216)">
+    <ellipse cx="48" cy="50" rx="18" ry="22" fill="#4A90E2"/>
+    <circle cx="48" cy="28" r="12" fill="#8B6F47"/>
+    <ellipse cx="48" cy="24" rx="13" ry="8" fill="#5C4033"/>
+    <!-- Left leg forward -->
+    <rect x="40" y="65" width="5" height="6" fill="#2C5F8D"/>
+    <rect x="50" y="63" width="5" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Up - Frame 2 (Idle) -->
+  <g id="up-2" transform="translate(192, 216)">
+    <ellipse cx="48" cy="50" rx="18" ry="22" fill="#4A90E2"/>
+    <circle cx="48" cy="28" r="12" fill="#8B6F47"/>
+    <ellipse cx="48" cy="24" rx="13" ry="8" fill="#5C4033"/>
+    <rect x="42" y="65" width="5" height="6" fill="#2C5F8D"/>
+    <rect x="49" y="65" width="5" height="6" fill="#2C5F8D"/>
+  </g>
+  
+  <!-- Walking Up - Frame 3 -->
+  <g id="up-3" transform="translate(288, 216)">
+    <ellipse cx="48" cy="50" rx="18" ry="22" fill="#4A90E2"/>
+    <circle cx="48" cy="28" r="12" fill="#8B6F47"/>
+    <ellipse cx="48" cy="24" rx="13" ry="8" fill="#5C4033"/>
+    <!-- Right leg forward -->
+    <rect x="41" y="63" width="5" height="6" fill="#2C5F8D"/>
+    <rect x="51" y="65" width="5" height="6" fill="#2C5F8D"/>
+  </g>
+</svg>
