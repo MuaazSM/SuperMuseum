@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Info, X, DoorOpen, MessageCircle } from 'lucide-react';
 import { rooms } from './data/museum-rooms';
 import { Chat } from './Chat';
-import { ExhibitCard } from './ExhibitCard';
 import type { ChatMessage } from './types';
+import { ChatService } from '../services/chatService';
 
 interface Position {
     x: number;
@@ -24,6 +24,7 @@ const MuseumMap: React.FC = () => {
     const [showChat, setShowChat] = useState(false);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [sessionId, setSessionId] = useState<string | undefined>(undefined);
     
     const moveSpeed = 10;
     const interactionRadius = 50;
@@ -60,27 +61,18 @@ const MuseumMap: React.FC = () => {
         setIsLoading(true);
 
         try {
-            // TODO: Replace with your actual API call
-            // For now, using a mock response
-            const response = await fetch("https://api.anthropic.com/v1/messages", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    model: "claude-sonnet-4-20250514",
-                    max_tokens: 1000,
-                    messages: [...chatMessages, userMessage].map(m => ({
-                        role: m.role,
-                        content: m.content
-                    }))
-                })
-            });
-
-            const data = await response.json();
+            // Use ChatService to send message to backend
+            const response = await ChatService.sendText(message, sessionId, language);
+            
+            // Update session ID if provided by backend
+            if (response.session_id && !sessionId) {
+                setSessionId(response.session_id);
+            }
+            
+            // Add assistant response
             const assistantMessage: ChatMessage = {
                 role: 'assistant',
-                content: data.content[0].text
+                content: response.response || 'Sorry, I did not receive a response.'
             };
             
             setChatMessages(prev => [...prev, assistantMessage]);
@@ -89,7 +81,7 @@ const MuseumMap: React.FC = () => {
             // Add error message
             const errorMessage: ChatMessage = {
                 role: 'assistant',
-                content: 'Sorry, I encountered an error. Please try again.'
+                content: 'Sorry, I encountered an error connecting to the museum guide. Please try again.'
             };
             setChatMessages(prev => [...prev, errorMessage]);
         } finally {
@@ -314,24 +306,60 @@ const MuseumMap: React.FC = () => {
 
             {/* Information Modal */}
             {activePointData && !showChat && (
-                <ExhibitCard
-                    title={activePointData.title}
-                    description={activePointData.description}
-                    category={activePointData.category}
-                    image={activePointData.image}
-                    onClose={() => setActivePoint(null)}
-                    onAskAI={() => {
-                        setShowChat(true);
-                        // Optionally pre-populate chat with a question about this exhibit
-                        const initialMessage: ChatMessage = {
-                            role: 'user',
-                            content: `Tell me more about ${activePointData.title}`
-                        };
-                        if (chatMessages.length === 0) {
-                            handleSendMessage(initialMessage.content);
-                        }
-                    }}
-                />
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-yellow-700 to-yellow-800 px-5 py-4 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-white">
+                                {activePointData.title}
+                            </h3>
+                            <button 
+                                onClick={() => setActivePoint(null)}
+                                className="text-white/80 hover:text-white transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-5">
+                            {activePointData.image && (
+                                <img 
+                                    src={activePointData.image} 
+                                    alt={activePointData.title}
+                                    className="w-full h-40 object-cover rounded-md mb-4"
+                                />
+                            )}
+                            
+                            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                {activePointData.description}
+                            </p>
+
+                            <span className="inline-block bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium mb-4">
+                                {activePointData.category}
+                            </span>
+
+                            {/* AI Chatbot Toggle Button */}
+                            <button
+                                onClick={() => {
+                                    setShowChat(true);
+                                    // Optionally pre-populate chat with a question about this exhibit
+                                    const initialMessage: ChatMessage = {
+                                        role: 'user',
+                                        content: `Tell me more about ${activePointData.title}`
+                                    };
+                                    if (chatMessages.length === 0) {
+                                        handleSendMessage(initialMessage.content);
+                                    }
+                                }}
+                                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:scale-105"
+                            >
+                                <MessageCircle className="w-5 h-5" />
+                                <span className="font-semibold">Ask AI Guide About This</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* AI Chatbot Modal */}
@@ -357,13 +385,10 @@ const MuseumMap: React.FC = () => {
             )}
 
             {/* Instructions */}
-            <div className="absolute bottom-2 left-4 p-3">
-                <p className="rubik-doodle-shadow text-sm text-white font-medium drop-shadow-lg [text-shadow:1px_1px_2px_rgba(0,0,0,0.7)]">
-                    Use arrow keys to move. 
-                    <br />
-                    Press Space/Enter near points of interest or doors to interact.
-                    <br />
-                    Press Esc to close information.
+            <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 p-3 rounded-lg shadow-lg">
+                <p className="text-sm text-gray-700">
+                    Use arrow keys to move. Press Space or Enter near points of interest or doors to interact.
+                    Press Esc to close information or chat.
                 </p>
             </div>
         </div>
