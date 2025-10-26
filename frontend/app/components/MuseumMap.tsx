@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Info, X, DoorOpen, MessageCircle } from 'lucide-react';
 import { rooms } from './data/museum-rooms';
 import { Chat } from './Chat';
+import { ExhibitCard } from './ExhibitCard';
 import type { ChatMessage } from './types';
 
 interface Position {
@@ -313,60 +314,24 @@ const MuseumMap: React.FC = () => {
 
             {/* Information Modal */}
             {activePointData && !showChat && (
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
-                        {/* Header */}
-                        <div className="bg-gradient-to-r from-yellow-700 to-yellow-800 px-5 py-4 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-white">
-                                {activePointData.title}
-                            </h3>
-                            <button 
-                                onClick={() => setActivePoint(null)}
-                                className="text-white/80 hover:text-white transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-5">
-                            {activePointData.image && (
-                                <img 
-                                    src={activePointData.image} 
-                                    alt={activePointData.title}
-                                    className="w-full h-40 object-cover rounded-md mb-4"
-                                />
-                            )}
-                            
-                            <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                                {activePointData.description}
-                            </p>
-
-                            <span className="inline-block bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium mb-4">
-                                {activePointData.category}
-                            </span>
-
-                            {/* AI Chatbot Toggle Button */}
-                            <button
-                                onClick={() => {
-                                    setShowChat(true);
-                                    // Optionally pre-populate chat with a question about this exhibit
-                                    const initialMessage: ChatMessage = {
-                                        role: 'user',
-                                        content: `Tell me more about ${activePointData.title}`
-                                    };
-                                    if (chatMessages.length === 0) {
-                                        handleSendMessage(initialMessage.content);
-                                    }
-                                }}
-                                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:scale-105"
-                            >
-                                <MessageCircle className="w-5 h-5" />
-                                <span className="font-semibold">Ask AI Guide About This</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <ExhibitCard
+                    title={activePointData.title}
+                    description={activePointData.description}
+                    category={activePointData.category}
+                    image={activePointData.image}
+                    onClose={() => setActivePoint(null)}
+                    onAskAI={() => {
+                        setShowChat(true);
+                        // Optionally pre-populate chat with a question about this exhibit
+                        const initialMessage: ChatMessage = {
+                            role: 'user',
+                            content: `Tell me more about ${activePointData.title}`
+                        };
+                        if (chatMessages.length === 0) {
+                            handleSendMessage(initialMessage.content);
+                        }
+                    }}
+                />
             )}
 
             {/* AI Chatbot Modal */}
