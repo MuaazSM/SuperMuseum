@@ -86,7 +86,7 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading }
   ];
 
   return (
-    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[700px] animate-fadeIn">
+    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[500px] animate-fadeIn">
       {/* Header */}
   <div className="bg-linear-to-r from-amber-700 to-orange-700 text-white p-6 flex items-center space-x-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-white opacity-5 animate-pulse"></div>

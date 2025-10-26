@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Info, X, DoorOpen } from 'lucide-react';
+import { Info, X, DoorOpen, MessageCircle } from 'lucide-react';
 import { rooms } from './data/museum-rooms';
+import { Chat } from './Chat';
+import type { ChatMessage } from './types';
 
 interface Position {
     x: number;
@@ -16,6 +18,11 @@ const MuseumMap: React.FC = () => {
     const [direction, setDirection] = useState<Direction>('down');
     const [frame, setFrame] = useState(0);
     const [isMoving, setIsMoving] = useState(false);
+    
+    // Chat state
+    const [showChat, setShowChat] = useState(false);
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     
     const moveSpeed = 10;
     const interactionRadius = 50;
@@ -41,11 +48,66 @@ const MuseumMap: React.FC = () => {
         return () => clearInterval(animationInterval);
     }, [isMoving]);
 
+    // Handle chat message sending
+    const handleSendMessage = async (message: string, language?: string) => {
+        // Add user message
+        const userMessage: ChatMessage = {
+            role: 'user',
+            content: message
+        };
+        setChatMessages(prev => [...prev, userMessage]);
+        setIsLoading(true);
+
+        try {
+            // TODO: Replace with your actual API call
+            // For now, using a mock response
+            const response = await fetch("https://api.anthropic.com/v1/messages", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    model: "claude-sonnet-4-20250514",
+                    max_tokens: 1000,
+                    messages: [...chatMessages, userMessage].map(m => ({
+                        role: m.role,
+                        content: m.content
+                    }))
+                })
+            });
+
+            const data = await response.json();
+            const assistantMessage: ChatMessage = {
+                role: 'assistant',
+                content: data.content[0].text
+            };
+            
+            setChatMessages(prev => [...prev, assistantMessage]);
+        } catch (error) {
+            console.error('Error sending message:', error);
+            // Add error message
+            const errorMessage: ChatMessage = {
+                role: 'assistant',
+                content: 'Sorry, I encountered an error. Please try again.'
+            };
+            setChatMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleKeyPress = useCallback((event: KeyboardEvent) => {
         if (event.key === 'Escape') {
-            setActivePoint(null);
+            if (showChat) {
+                setShowChat(false);
+            } else {
+                setActivePoint(null);
+            }
             return;
         }
+
+        // Don't handle movement keys when chat is open
+        if (showChat) return;
 
         // Prevent default browser scrolling
         if (
@@ -120,7 +182,7 @@ const MuseumMap: React.FC = () => {
             setDirection(newDirection);
             setIsMoving(true);
         }
-    }, [position, currentRoom, direction, room.doors, room.interactivePoints]);
+    }, [position, currentRoom, direction, room.doors, room.interactivePoints, showChat]);
 
     const handleKeyUp = useCallback((event: KeyboardEvent) => {
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
@@ -250,7 +312,7 @@ const MuseumMap: React.FC = () => {
             </div>
 
             {/* Information Modal */}
-            {activePointData && (
+            {activePointData && !showChat && (
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
                         {/* Header */}
@@ -280,10 +342,51 @@ const MuseumMap: React.FC = () => {
                                 {activePointData.description}
                             </p>
 
-                            <span className="inline-block bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium">
+                            <span className="inline-block bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium mb-4">
                                 {activePointData.category}
                             </span>
+
+                            {/* AI Chatbot Toggle Button */}
+                            <button
+                                onClick={() => {
+                                    setShowChat(true);
+                                    // Optionally pre-populate chat with a question about this exhibit
+                                    const initialMessage: ChatMessage = {
+                                        role: 'user',
+                                        content: `Tell me more about ${activePointData.title}`
+                                    };
+                                    if (chatMessages.length === 0) {
+                                        handleSendMessage(initialMessage.content);
+                                    }
+                                }}
+                                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:scale-105"
+                            >
+                                <MessageCircle className="w-5 h-5" />
+                                <span className="font-semibold">Ask AI Guide About This</span>
+                            </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* AI Chatbot Modal */}
+            {showChat && (
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="relative w-full max-w-3xl h-[75vh]">
+                        {/* Close button */}
+                        <button
+                            onClick={() => setShowChat(false)}
+                            className="absolute -top-2 -right-2 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+                        >
+                            <X className="w-6 h-6 text-gray-700" />
+                        </button>
+                        
+                        {/* Chat Component */}
+                        <Chat 
+                            messages={chatMessages}
+                            onSendMessage={handleSendMessage}
+                            isLoading={isLoading}
+                        />
                     </div>
                 </div>
             )}
@@ -292,7 +395,7 @@ const MuseumMap: React.FC = () => {
             <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 p-3 rounded-lg shadow-lg">
                 <p className="text-sm text-gray-700">
                     Use arrow keys to move. Press Space or Enter near points of interest or doors to interact.
-                    Press Esc to close information.
+                    Press Esc to close information or chat.
                 </p>
             </div>
         </div>
