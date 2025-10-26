@@ -51,8 +51,8 @@ export const Navigation: React.FC<NavigationProps> = ({
             </div>
 
             {/* Center Section - Navigation (Desktop) - Light Pixel Art Style */}
-            <nav className="hidden md:flex items-center space-x-3">
-              {navSections.map(({ id, label, icon: Icon }) => (
+            <nav className="hidden md:flex flex-1 items-center justify-end pr-4">
+              {navSections.filter(({ id }) => id === 'home').map(({ id, label, icon: Icon }) => (
                 <Link
                   key={id}
                   to={id === 'home' ? '/' : `/${id}`}
@@ -86,29 +86,20 @@ export const Navigation: React.FC<NavigationProps> = ({
         {isMobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-gray-100 border-2 border-t-0 border-t-gray-300 border-l-gray-300 border-r-gray-400 border-b-gray-400 z-[9998] mt-0">
             {/* Mobile Navigation - Light Pixel Art Style with Fixed Button Layout */}
-            <div className="p-3 grid grid-cols-2 gap-2 bg-gray-100 justify-items-center">
-              {navSections.map((section) => {
+            <div className="p-3 grid grid-cols-1 gap-2 bg-gray-100 justify-items-center">
+              {navSections.filter(section => section.id === 'home').map((section) => {
                 const Icon = section.icon;
-                const colors = [
-                  { bg: 'bg-amber-500', text: 'text-amber-100', border: 'border-t-amber-300 border-l-amber-300 border-r-amber-700 border-b-amber-700' },
-                  { bg: 'bg-green-500', text: 'text-green-100', border: 'border-t-green-300 border-l-green-300 border-r-green-700 border-b-green-700' },
-                  { bg: 'bg-blue-500', text: 'text-blue-100', border: 'border-t-blue-300 border-l-blue-300 border-r-blue-700 border-b-blue-700' },
-                  { bg: 'bg-purple-500', text: 'text-purple-100', border: 'border-t-purple-300 border-l-purple-300 border-r-purple-700 border-b-purple-700' },
-                  { bg: 'bg-red-500', text: 'text-red-100', border: 'border-t-red-300 border-l-red-300 border-r-red-700 border-b-red-700' },
-                  { bg: 'bg-indigo-500', text: 'text-indigo-100', border: 'border-t-indigo-300 border-l-indigo-300 border-r-indigo-700 border-b-indigo-700' }
-                ];
-                const colorIndex = navSections.indexOf(section) % colors.length;
                 return (
                   <Link
                     key={section.id}
                     to={section.id === 'home' ? '/' : `/${section.id}`}
-                    className={`flex flex-col items-center justify-center w-full border-2 ${activeSection === section.id ? 'bg-amber-500 border-t-amber-300 border-l-amber-300 border-r-amber-700 border-b-amber-700' : `${colors[colorIndex].bg} ${colors[colorIndex].border}`} p-2 hover:brightness-110 transition-all font-sans`}
+                    className={`flex flex-col items-center justify-center w-full border-2 ${activeSection === section.id ? 'bg-amber-500 border-t-amber-300 border-l-amber-300 border-r-amber-700 border-b-amber-700' : 'bg-amber-500 border-t-amber-300 border-l-amber-300 border-r-amber-700 border-b-amber-700'} p-2 hover:brightness-110 transition-all font-sans`}
                     onClick={() => {
                       setActiveSection(section.id);
                       setIsMobileMenuOpen(false);
                     }}
                   >
-                    <Icon className={`w-6 h-6 mb-1 ${activeSection === section.id ? 'text-white' : 'text-white'}`} />
+                    <Icon className={`w-6 h-6 mb-1 text-white`} />
                     <div className="text-center">
                       <div className="font-semibold text-sm text-white">{section.label}</div>
                     </div>

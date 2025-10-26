@@ -473,33 +473,56 @@ const MuseumMap: React.FC = () => {
             {showChat && (
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="relative w-full max-w-3xl h-[75vh]">
-                        {/* Close button */}
-                        <button
-                            onClick={() => setShowChat(false)}
-                            className="absolute -top-2 -right-2 z-10 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
-                        >
-                            <X className="w-6 h-6 text-gray-700" />
-                        </button>
-                        
-                        {/* Chat Component */}
-                        <Chat 
-                            messages={chatMessages}
-                            onSendMessage={handleSendMessage}
-                            isLoading={isLoading}
-                        />
+                        {/* Chat Component with custom header close button */}
+                        <div className="flex flex-col h-full w-full">
+                            {/* Header with close button inside */}
+                            <div className="bg-indigo-700 border-t-4 border-t-indigo-300 border-b-4 border-b-indigo-900 border-l-4 border-l-indigo-200 border-r-4 border-r-indigo-900 px-6 py-4 flex items-center space-x-4 justify-between" style={{ boxShadow: '0 4px 0 #312e81' }}>
+                                <div className="flex items-center space-x-4">
+                                    <svg className="w-8 h-8 text-indigo-100" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-indigo-50 font-sans [text-shadow:1px_1px_0px_#000]">AI Museum Guide</h2>
+                                        <p className="text-sm text-indigo-200 font-sans">Ask about heritage and culture</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowChat(false)}
+                                    className="bg-red-500 border-4 border-t-red-300 border-l-red-300 border-r-red-700 border-b-red-700 p-2 hover:bg-red-600 transition-all"
+                                    style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                    <X className="w-7 h-7 text-white" />
+                                </button>
+                            </div>
+                            {/* Chat body (reuse Chat component, but hide its header) */}
+                            <div className="flex-1 h-full">
+                                <Chat 
+                                    messages={chatMessages}
+                                    onSendMessage={handleSendMessage}
+                                    isLoading={isLoading}
+                                    hideHeader={true}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
+            )}
+
+            {/* Room Labels - Rubik Doodle Shadow font */}
+            {/* Adjust left/top values as needed for your map layout */}
+            {currentRoom === 'main' && (
+                <><div className="absolute" style={{ left: 310, top: 40 }}>
+                    <span className="rubik-doodle-shadow text-3xl text-white drop-shadow-lg">Culture</span>
+                </div><div className="absolute" style={{ left: 615, top: 40 }}>
+                        <span className="rubik-doodle-shadow text-3xl text-white drop-shadow-lg">Ecology</span>
+                    </div><div className="absolute" style={{ left: 920, top: 40 }}>
+                        <span className="rubik-doodle-shadow text-3xl text-white drop-shadow-lg">History</span>
+                    </div></>
             )}
 
             {/* Instructions - Only show in main hall */}
             {currentRoom === 'main' && (
                 <div className="absolute bottom-40 left-170 p-3">
                     <p className="rubik-doodle-shadow text-lg text-white font-medium drop-shadow-lg [text-shadow:1px_1px_2px_rgba(0,0,0,0.7)]">
-                        Use arrow keys to move. 
-                        <br />
-                        Press Space/Enter to interact.
-                        <br />
-                        Press Esc to close information.
+                        Use arrow keys to move.<br/>Press Space/Enter to interact.<br/>Press Esc to close information.
                     </p>
                 </div>
             )}

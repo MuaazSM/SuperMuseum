@@ -90,21 +90,35 @@ export const rooms: Room[] = [
         interactivePoints: [
             {
                 id: 2,
-                x: 200,
-                y: 200,
-                title: "Classical Dance Forms",
-                description: "India's rich tradition of classical dances includes Bharatanatyam, Kathak, Odissi, and more. Each dance form tells stories of mythology, emotion, and cultural heritage.",
-                category: 'culture',
-                image: '/assets/cultural/dance.jpg'
+                x: 180,
+                y: 340,
+                title: "Folk Art Showcase",
+                description: "Discover vibrant folk art traditions from across India, including Madhubani, Warli, and Pattachitra.",
+                category: 'culture'
             },
             {
                 id: 3,
-                x: 1100,
-                y: 200,
+                x: 180,
+                y: 520,
+                title: "Textile Heritage",
+                description: "Explore the diversity of Indian textiles, from Banarasi silk to Kanchipuram sarees and intricate embroidery.",
+                category: 'culture'
+            },
+            {
+                id: 4,
+                x: 1220,
+                y: 340,
+                title: "Classical Dance Forms",
+                description: "India's rich tradition of classical dances includes Bharatanatyam, Kathak, Odissi, and more.",
+                category: 'culture'
+            },
+            {
+                id: 5,
+                x: 1220,
+                y: 520,
                 title: "Traditional Music",
-                description: "Experience the rich heritage of Indian classical music, including both Hindustani and Carnatic traditions.",
-                category: 'culture',
-                image: '/assets/cultural/music.jpg'
+                description: "Experience the heritage of Indian classical music, including Hindustani and Carnatic traditions.",
+                category: 'culture'
             }
         ]
     },
@@ -125,22 +139,36 @@ export const rooms: Room[] = [
         ],
         interactivePoints: [
             {
-                id: 4,
-                x: 300,
-                y: 200,
+                id: 6,
+                x: 180,
+                y: 340,
                 title: "Western Ghats Biodiversity",
-                description: "Explore the rich biodiversity of the Western Ghats, home to thousands of species of plants and animals.",
-                category: 'ecology',
-                image: '/assets/cultural/ecology.jpg'
+                description: "Explore the biodiversity of the Western Ghats, home to thousands of unique species.",
+                category: 'ecology'
             },
             {
-                id: 5,
-                x: 1100,
-                y: 200,
+                id: 7,
+                x: 180,
+                y: 520,
+                title: "Mangrove Ecosystems",
+                description: "Learn about India's vital mangrove forests and their role in coastal protection.",
+                category: 'ecology'
+            },
+            {
+                id: 8,
+                x: 1220,
+                y: 340,
                 title: "Himalayan Ecosystem",
                 description: "Discover the unique ecosystem of the Himalayas and its importance to India's environment.",
-                category: 'ecology',
-                image: '/assets/cultural/himalaya.jpg'
+                category: 'ecology'
+            },
+            {
+                id: 9,
+                x: 1220,
+                y: 520,
+                title: "Desert Life",
+                description: "See how plants and animals adapt to the harsh conditions of India's deserts.",
+                category: 'ecology'
             }
         ]
     },
@@ -161,22 +189,36 @@ export const rooms: Room[] = [
         ],
         interactivePoints: [
             {
-                id: 6,
-                x: 250,
-                y: 200,
+                id: 10,
+                x: 180,
+                y: 340,
                 title: "Ancient Weapons",
                 description: "View the collection of historical weapons that shaped India's military history.",
-                category: 'history',
-                image: '/assets/cultural/weapons.jpg'
+                category: 'history'
             },
             {
-                id: 7,
-                x: 1100,
-                y: 200,
+                id: 11,
+                x: 180,
+                y: 520,
                 title: "Royal Artifacts",
                 description: "Explore precious artifacts from India's royal dynasties and their historical significance.",
-                category: 'history',
-                image: '/assets/cultural/artifacts.jpg'
+                category: 'history'
+            },
+            {
+                id: 12,
+                x: 1220,
+                y: 340,
+                title: "Ancient Scripts",
+                description: "Learn about the evolution of writing in India, from the Indus script to Brahmi and Devanagari.",
+                category: 'history'
+            },
+            {
+                id: 13,
+                x: 1220,
+                y: 520,
+                title: "Historic Monuments",
+                description: "Discover the stories behind India's most iconic monuments and their builders.",
+                category: 'history'
             }
         ]
     }
