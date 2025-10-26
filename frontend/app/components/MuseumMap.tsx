@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Info, X, DoorOpen, MessageCircle } from 'lucide-react';
 import { rooms } from './data/museum-rooms';
 import { Chat } from './Chat';
+import { ExhibitCard } from './ExhibitCard';
 import type { ChatMessage } from './types';
 import { ChatService } from '../services/chatService';
 
@@ -14,11 +15,17 @@ type Direction = 'down' | 'left' | 'right' | 'up';
 
 const MuseumMap: React.FC = () => {
     const [position, setPosition] = useState<Position>({ x: 500, y: 450 });
+    const [lastRoom, setLastRoom] = useState<string | null>(null);
     const [activePoint, setActivePoint] = useState<number | null>(null);
     const [currentRoom, setCurrentRoom] = useState('main');
+    const [pendingRoom, setPendingRoom] = useState<string | null>(null);
+    const [pendingPosition, setPendingPosition] = useState<Position | null>(null);
+    const [pendingDirection, setPendingDirection] = useState<Direction>('down');
+    const [transitioning, setTransitioning] = useState(false);
     const [direction, setDirection] = useState<Direction>('down');
     const [frame, setFrame] = useState(0);
     const [isMoving, setIsMoving] = useState(false);
+    const [keysPressed, setKeysPressed] = useState<Set<string>>(new Set());
     
     // Chat state
     const [showChat, setShowChat] = useState(false);
@@ -26,7 +33,7 @@ const MuseumMap: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState<string | undefined>(undefined);
     
-    const moveSpeed = 10;
+    const moveSpeed = 9;
     const interactionRadius = 50;
 
     const room = rooms.find(r => r.id === currentRoom)!;
@@ -52,6 +59,118 @@ const MuseumMap: React.FC = () => {
     const SPRITE_HEIGHT = 153;
     const FRAMES_PER_DIRECTION = 4;
 
+    // Continuous movement loop with auto-door travel
+    useEffect(() => {
+        if (keysPressed.size === 0) {
+            setIsMoving(false);
+            setFrame(0); // Reset to idle frame when not moving
+            return;
+        }
+
+        let animationFrameId: number;
+        let lastMoveTime = 0;
+
+        const moveLoop = (currentTime: number) => {
+            if (currentTime - lastMoveTime > 50 && !transitioning) { // ~20 FPS movement for more controlled speed
+                setPosition(prevPosition => {
+                    let newPosition = { ...prevPosition };
+                    let moved = false;
+                    let newDirection = direction;
+
+                    if (keysPressed.has('ArrowUp')) {
+                        newPosition.y = Math.max(0, prevPosition.y - moveSpeed);
+                        newDirection = 'up';
+                        moved = true;
+                    }
+                    if (keysPressed.has('ArrowDown')) {
+                        newPosition.y = Math.min(720, prevPosition.y + moveSpeed);
+                        newDirection = 'down';
+                        moved = true;
+                    }
+                    if (keysPressed.has('ArrowLeft')) {
+                        newPosition.x = Math.max(0, prevPosition.x - moveSpeed);
+                        newDirection = 'left';
+                        moved = true;
+                    }
+                    if (keysPressed.has('ArrowRight')) {
+                        newPosition.x = Math.min(1400, prevPosition.x + moveSpeed);
+                        newDirection = 'right';
+                        moved = true;
+                    }
+
+                    if (moved) {
+                        setDirection(newDirection);
+                        setIsMoving(true);
+                    }
+
+                    // Auto-door travel: check if player is close to any door
+                    for (const door of room.doors) {
+                        const dx = door.x - newPosition.x;
+                        const dy = door.y - newPosition.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance <= interactionRadius) {
+                            const targetRoom = rooms.find(r => r.id === door.leadsTo);
+                            let nextPos: Position;
+                            let nextDir: Direction = 'down';
+                            if (door.leadsTo === 'main') {
+                                // Find the door in the main hall that leads to the last room
+                                nextPos = { x: 500, y: 450 };
+                                if (lastRoom) {
+                                    const mainRoom = rooms.find(r => r.id === 'main');
+                                    const doorToLastRoom = mainRoom?.doors.find(d => d.leadsTo === lastRoom);
+                                    if (doorToLastRoom) {
+                                        nextPos = { x: doorToLastRoom.x, y: doorToLastRoom.y - 40 };
+                                    }
+                                }
+                            } else {
+                                // Find the "back to main hall" door in the target room and spawn there, but lower to avoid instant trigger
+                                const backToMainDoor = targetRoom?.doors.find(d => d.leadsTo === 'main');
+                                if (backToMainDoor) {
+                                    nextPos = { x: backToMainDoor.x, y: backToMainDoor.y + 120 };
+                                } else {
+                                    nextPos = { x: 500, y: 620 };
+                                }
+                            }
+                            setPendingRoom(door.leadsTo);
+                            setPendingPosition(nextPos);
+                            setPendingDirection(nextDir);
+                            setTransitioning(true);
+                            return prevPosition;
+                        }
+                    }
+
+                    return newPosition;
+                });
+                lastMoveTime = currentTime;
+            }
+            animationFrameId = requestAnimationFrame(moveLoop);
+        };
+
+        animationFrameId = requestAnimationFrame(moveLoop);
+
+        return () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        };
+    }, [keysPressed, moveSpeed, direction, room.doors, currentRoom, lastRoom, transitioning]);
+
+    // Smooth transition effect for room change
+    useEffect(() => {
+        if (transitioning && pendingRoom && pendingPosition) {
+            const timeout = setTimeout(() => {
+                if (pendingRoom !== 'main') setLastRoom(currentRoom);
+                setCurrentRoom(pendingRoom);
+                setPosition(pendingPosition);
+                setDirection(pendingDirection);
+                setTransitioning(false);
+                setPendingRoom(null);
+                setPendingPosition(null);
+            }, 350); // 350ms fade duration
+            return () => clearTimeout(timeout);
+        }
+    }, [transitioning, pendingRoom, pendingPosition, pendingDirection, currentRoom]);
+
     // Animation frame update
     useEffect(() => {
         if (!isMoving) {
@@ -61,7 +180,7 @@ const MuseumMap: React.FC = () => {
 
         const animationInterval = setInterval(() => {
             setFrame(prev => (prev + 1) % FRAMES_PER_DIRECTION);
-        }, 150); // Change frame every 150ms for smooth animation
+        }, 120); // Change frame every 120ms for faster, more responsive animation
 
         return () => clearInterval(animationInterval);
     }, [isMoving]);
@@ -128,31 +247,14 @@ const MuseumMap: React.FC = () => {
             event.preventDefault();
         }
 
-        let newPosition = { ...position };
-        let moved = false;
-        let newDirection = direction;
+        // Handle movement keys with continuous movement
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+            setKeysPressed(prev => new Set(prev).add(event.key));
+            return;
+        }
 
+        // Handle interaction keys
         switch (event.key) {
-            case 'ArrowUp':
-                newPosition.y = Math.max(0, position.y - moveSpeed);
-                newDirection = 'up';
-                moved = true;
-                break;
-            case 'ArrowDown':
-                newPosition.y = Math.min(540, position.y + moveSpeed);
-                newDirection = 'down';
-                moved = true;
-                break;
-            case 'ArrowLeft':
-                newPosition.x = Math.max(0, position.x - moveSpeed);
-                newDirection = 'left';
-                moved = true;
-                break;
-            case 'ArrowRight':
-                newPosition.x = Math.min(1400, position.x + moveSpeed);
-                newDirection = 'right';
-                moved = true;
-                break;
             case 'Enter':
             case ' ':
                 // Check for nearby doors
@@ -162,11 +264,34 @@ const MuseumMap: React.FC = () => {
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     
                     if (distance <= interactionRadius) {
+                        const targetRoom = rooms.find(r => r.id === door.leadsTo);
+                        // Track the last room before switching
+                        if (door.leadsTo !== 'main') {
+                            setLastRoom(currentRoom);
+                        }
                         setCurrentRoom(door.leadsTo);
+
                         if (door.leadsTo === 'main') {
-                            setPosition({ x: 500, y: 450 });
+                            // Find the door in the main hall that leads to the last room
+                            let spawnPos = { x: 500, y: 450 };
+                            if (lastRoom) {
+                                const mainRoom = rooms.find(r => r.id === 'main');
+                                const doorToLastRoom = mainRoom?.doors.find(d => d.leadsTo === lastRoom);
+                                if (doorToLastRoom) {
+                                    spawnPos = { x: doorToLastRoom.x, y: doorToLastRoom.y - 40 }; // spawn 40px above the door
+                                }
+                            }
+                            setPosition(spawnPos);
+                            setDirection('down');
                         } else {
-                            setPosition({ x: 500, y: 500 });
+                            // Find the "back to main hall" door in the target room and spawn there
+                            const backToMainDoor = targetRoom?.doors.find(d => d.leadsTo === 'main');
+                            if (backToMainDoor) {
+                                setPosition({ x: backToMainDoor.x, y: backToMainDoor.y + 40 }); // spawn 40px lower
+                            } else {
+                                setPosition({ x: 500, y: 540 }); // fallback position, lower
+                            }
+                            setDirection('down'); // face downwards when entering rooms
                         }
                         return;
                     }
@@ -174,10 +299,15 @@ const MuseumMap: React.FC = () => {
 
                 // If no door interaction, check for interactive points
                 for (const point of room.interactivePoints) {
-                    const dx = point.x - position.x;
-                    const dy = point.y - position.y;
+                    let px = point.x;
+                    let py = point.y;
+                    if (currentRoom === 'main' && point.id === 1) {
+                        px = 650;
+                        py = 430;
+                    }
+                    const dx = px - position.x;
+                    const dy = py - position.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-                    
                     if (distance <= interactionRadius) {
                         setActivePoint(point.id);
                         return;
@@ -185,17 +315,15 @@ const MuseumMap: React.FC = () => {
                 }
                 break;
         }
-
-        if (moved) {
-            setPosition(newPosition);
-            setDirection(newDirection);
-            setIsMoving(true);
-        }
-    }, [position, currentRoom, direction, room.doors, room.interactivePoints, showChat]);
+    }, [position, currentRoom, room.doors, room.interactivePoints, showChat]);
 
     const handleKeyUp = useCallback((event: KeyboardEvent) => {
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-            setIsMoving(false);
+            setKeysPressed(prev => {
+                const newKeys = new Set(prev);
+                newKeys.delete(event.key);
+                return newKeys;
+            });
         }
     }, []);
 
@@ -223,82 +351,79 @@ const MuseumMap: React.FC = () => {
 
     return (
         <div className="relative w-screen h-screen border-2 border-gray-300 overflow-hidden">
+            {/* Smooth fade overlay */}
+            <div className={`pointer-events-none transition-opacity duration-300 ease-in-out ${transitioning ? 'opacity-100 bg-black/80 z-50' : 'opacity-0'}`} style={{position:'absolute', inset:0}} />
             <img 
                 src={room.image}
                 alt={`${room.name} View`}
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover transition-opacity duration-300 ${transitioning ? 'opacity-0' : 'opacity-100'}`}
             />
             
-            {/* Room Name */}
-            <div className="absolute top-4 left-4 bg-white bg-opacity-90 p-2 rounded-lg shadow-lg">
-                <h2 className="text-xl font-bold text-gray-800">{room.name}</h2>
-            </div>
-
-            {/* Doors */}
-            {room.doors.map(door => {
-                const isNearby = Math.abs(door.x - position.x) < interactionRadius &&
-                                Math.abs(door.y - position.y) < interactionRadius;
-                return (
-                    <div
-                        key={door.id}
-                        className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${
-                            isNearby ? 'animate-pulse' : ''
-                        }`}
-                        style={{
-                            left: `${door.x}px`,
-                            top: `${door.y}px`,
-                            width: `${door.width}px`,
-                            height: `${door.height}px`
-                        }}
-                    >
-                        <div className={`w-full h-full flex items-center justify-center
-                            ${isNearby ? 'text-yellow-500' : 'text-gray-400'}`}>
-                            <DoorOpen className="w-8 h-8" />
-                            {isNearby && (
-                                <div className="absolute -bottom-8 whitespace-nowrap bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">
-                                    Press Space to enter {door.label}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            })}
+            {/* Doors removed: no icons or pop-ups rendered */}
 
             {/* Interactive Points */}
             {room.interactivePoints.map(point => {
+                // Center the info button in the main hall (id: 1)
+                let px = point.x;
+                let py = point.y;
+                if (currentRoom === 'main' && point.id === 1) {
+                    px = 650; // center x (adjust as needed for your map size)
+                    py = 430; // center y (adjust as needed for your map size)
+                }
                 const distance = Math.sqrt(
-                    Math.pow(point.x - position.x, 2) + 
-                    Math.pow(point.y - position.y, 2)
+                    Math.pow(px - position.x, 2) + 
+                    Math.pow(py - position.y, 2)
                 );
                 const isNearby = distance <= interactionRadius;
 
+                // Show prompt above player if near this point
+                const showPrompt = isNearby && Math.abs(position.x - px) < 60 && Math.abs(position.y - py) < 60;
+
                 return (
-                    <div 
-                        key={point.id}
-                        className={`absolute w-6 h-6 transform -translate-x-1/2 -translate-y-1/2 ${
-                            isNearby ? 'animate-pulse' : ''
-                        }`}
-                        style={{
-                            left: `${point.x}px`,
-                            top: `${point.y}px`,
-                        }}
-                    >
-                        <div className={`w-full h-full rounded-full flex items-center justify-center
-                            ${isNearby ? 'bg-yellow-300' : 'bg-gray-400'}`}>
-                            <Info className={`w-4 h-4 ${isNearby ? 'text-yellow-700' : 'text-white'}`} />
-                            {isNearby && (
-                                <div className="absolute -bottom-8 whitespace-nowrap bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm">
+                    <React.Fragment key={point.id}>
+                        <div 
+                            className={`absolute w-8 h-8 transform -translate-x-1/2 -translate-y-1/2 ${
+                                isNearby ? 'animate-pulse' : ''
+                            }`}
+                            style={{
+                                left: `${px}px`,
+                                top: `${py}px`,
+                            }}
+                        >
+                            <div className={`w-full h-full flex items-center justify-center font-bold text-lg select-none
+                                ${isNearby
+                                    ? 'bg-yellow-300 border-2 border-t-yellow-100 border-l-yellow-100 border-r-yellow-600 border-b-yellow-600 text-yellow-900 shadow-yellow-200'
+                                    : 'bg-gray-300 border-2 border-t-gray-100 border-l-gray-100 border-r-gray-600 border-b-gray-600 text-gray-700 shadow-gray-200'}
+                                pixel-art-cube`}
+                                style={{
+                                    boxShadow: isNearby ? '2px 2px 0 #eab308' : '2px 2px 0 #a3a3a3',
+                                    opacity: 0.65
+                                }}
+                            >
+                                <span style={{fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1.25rem', lineHeight: 1}}>i</span>
+                            </div>
+                        </div>
+                        {showPrompt && (
+                            <div
+                                className="absolute z-50"
+                                style={{
+                                    left: `${position.x}px`,
+                                    top: `${position.y - 90}px`,
+                                    transform: 'translate(-50%, 0)'
+                                }}
+                            >
+                                <div className="bg-green-500 border-2 border-t-green-300 border-l-green-300 border-r-green-700 border-b-green-700 text-white px-4 py-2 font-bold font-sans text-sm shadow-lg pixel-art-dialogue">
                                     Press Space to interact
                                 </div>
-                            )}
-                        </div>
-                    </div>
+                            </div>
+                        )}
+                    </React.Fragment>
                 );
             })}
 
             {/* Animated Player Character using spritesheet */}
             <div
-                className="absolute"
+                className={`absolute transition-opacity duration-300 ${transitioning ? 'opacity-0' : 'opacity-100'}`}
                 style={{
                     left: `${position.x}px`,
                     top: `${position.y}px`,
@@ -322,59 +447,25 @@ const MuseumMap: React.FC = () => {
 
             {/* Information Modal */}
             {activePointData && !showChat && (
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
-                        {/* Header */}
-                        <div className="bg-gradient-to-r from-yellow-700 to-yellow-800 px-5 py-4 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-white">
-                                {activePointData.title}
-                            </h3>
-                            <button 
-                                onClick={() => setActivePoint(null)}
-                                className="text-white/80 hover:text-white transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-5">
-                            {activePointData.image && (
-                                <img 
-                                    src={activePointData.image} 
-                                    alt={activePointData.title}
-                                    className="w-full h-40 object-cover rounded-md mb-4"
-                                />
-                            )}
-                            
-                            <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                                {activePointData.description}
-                            </p>
-
-                            <span className="inline-block bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium mb-4">
-                                {activePointData.category}
-                            </span>
-
-                            {/* AI Chatbot Toggle Button */}
-                            <button
-                                onClick={() => {
-                                    setShowChat(true);
-                                    // Optionally pre-populate chat with a question about this exhibit
-                                    const initialMessage: ChatMessage = {
-                                        role: 'user',
-                                        content: `Tell me more about ${activePointData.title}`
-                                    };
-                                    if (chatMessages.length === 0) {
-                                        handleSendMessage(initialMessage.content);
-                                    }
-                                }}
-                                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:scale-105"
-                            >
-                                <MessageCircle className="w-5 h-5" />
-                                <span className="font-semibold">Ask AI Guide About This</span>
-                            </button>
-                        </div>
-                    </div>
+                <div className="z-50 absolute inset-0">
+                    <ExhibitCard
+                        title={activePointData.title}
+                        description={activePointData.description}
+                        category={activePointData.category}
+                        image={currentRoom === 'main' ? undefined : activePointData.image}
+                        onClose={() => setActivePoint(null)}
+                        onAskAI={() => {
+                            setShowChat(true);
+                            // Optionally pre-populate chat with a question about this exhibit
+                            const initialMessage: ChatMessage = {
+                                role: 'user',
+                                content: `Tell me more about ${activePointData.title}`
+                            };
+                            if (chatMessages.length === 0) {
+                                handleSendMessage(initialMessage.content);
+                            }
+                        }}
+                    />
                 </div>
             )}
 
@@ -400,13 +491,18 @@ const MuseumMap: React.FC = () => {
                 </div>
             )}
 
-            {/* Instructions */}
-            <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 p-3 rounded-lg shadow-lg">
-                <p className="text-sm text-gray-700">
-                    Use arrow keys to move. Press Space or Enter near points of interest or doors to interact.
-                    Press Esc to close information or chat.
-                </p>
-            </div>
+            {/* Instructions - Only show in main hall */}
+            {currentRoom === 'main' && (
+                <div className="absolute bottom-40 left-170 p-3">
+                    <p className="rubik-doodle-shadow text-lg text-white font-medium drop-shadow-lg [text-shadow:1px_1px_2px_rgba(0,0,0,0.7)]">
+                        Use arrow keys to move. 
+                        <br />
+                        Press Space/Enter to interact.
+                        <br />
+                        Press Esc to close information.
+                    </p>
+                </div>
+            )}
         </div>
     );
 };
