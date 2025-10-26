@@ -1,4 +1,51 @@
 import React, { useState, useRef, useEffect } from 'react';
+// Pixel Art Custom Audio Player
+interface PixelAudioPlayerProps {
+  src: string;
+  isPlaying: boolean;
+  onPlayPause: () => void;
+  currentTime: number;
+  duration: number;
+  onSeek: (value: number) => void;
+}
+function PixelAudioPlayer({ src, isPlaying, onPlayPause, currentTime, duration, onSeek }: PixelAudioPlayerProps) {
+  // Format time as mm:ss
+  const formatTime = (t: number) => {
+    if (!t || isNaN(t)) return '0:00';
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+  return (
+    <div className="mt-2 flex items-center gap-3 bg-indigo-100 border-4 border-t-indigo-200 border-l-indigo-200 border-r-indigo-400 border-b-indigo-400 px-3 py-2 rounded shadow pixel-art-audio">
+      <button
+        onClick={onPlayPause}
+        className={`w-10 h-10 flex items-center justify-center bg-indigo-400 border-2 border-t-indigo-100 border-l-indigo-100 border-r-indigo-700 border-b-indigo-700 text-white font-bold text-lg pixel-art-btn hover:bg-indigo-500 transition-all`}
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+      >
+        {isPlaying ? (
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><rect x="3" y="3" width="5" height="14" rx="1"/><rect x="12" y="3" width="5" height="14" rx="1"/></svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><polygon points="4,3 17,10 4,17" /></svg>
+        )}
+      </button>
+      <div className="flex-1 flex flex-col">
+        <input
+          type="range"
+          min={0}
+          max={duration || 0}
+          value={currentTime}
+          onChange={e => onSeek(Number(e.target.value))}
+          className="w-full accent-indigo-400 pixel-art-slider"
+        />
+        <div className="flex justify-between text-xs text-indigo-700 font-mono mt-1">
+          <span>{formatTime(currentTime)}</span>
+          <span>{formatTime(duration)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 import { Send, Sparkles, MessageCircle, Loader, AlertCircle, Volume2 } from 'lucide-react';
 import type { ChatMessage } from './types';
 import { ChatService } from '../services/chatService';
@@ -34,29 +81,72 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading, 
     scrollToBottom();
   }, [localMessages, isLoading, isMusicGenerating]);
 
+  // Custom audio player state
+  const [audioState, setAudioState] = useState({
+    index: null as number | null,
+    audio: null as HTMLAudioElement | null,
+    isPlaying: false,
+    currentTime: 0,
+    duration: 0,
+    src: '',
+  });
+
   const speakMessage = async (index: number) => {
     const msg = localMessages[index];
     if (!msg || msg.role !== 'assistant') return;
     setTtsError(null);
     try {
       setIsSpeakingIndex(index);
-      // reuse if already synthesized
-      if (msg.voiceAudioUrl) {
-        const audio = new Audio(msg.voiceAudioUrl);
-        await audio.play();
-        return;
+      let audioUrl = msg.voiceAudioUrl;
+      if (!audioUrl) {
+        const res = await TTSService.convert(msg.content, { language, speaker: 'anushka' });
+        audioUrl = res.url;
+        const updated = [...localMessages];
+        updated[index] = { ...msg, voiceAudioUrl: audioUrl };
+        setLocalMessages(updated);
       }
-  const res = await TTSService.convert(msg.content, { language, speaker: 'anushka' });
-      const updated = [...localMessages];
-      updated[index] = { ...msg, voiceAudioUrl: res.url };
-      setLocalMessages(updated);
-      const audio = new Audio(res.url);
-      await audio.play();
+      // Stop any previous audio
+      if (audioState.audio) {
+        audioState.audio.pause();
+        audioState.audio.currentTime = 0;
+      }
+      // Create and play new audio
+      const audio = new window.Audio(audioUrl);
+      audio.onended = () => setAudioState(s => ({ ...s, isPlaying: false, currentTime: 0 }));
+      audio.ontimeupdate = () => setAudioState(s => ({ ...s, currentTime: audio.currentTime }));
+      audio.onloadedmetadata = () => setAudioState(s => ({ ...s, duration: audio.duration }));
+      audio.play();
+      setAudioState({
+        index,
+        audio,
+        isPlaying: true,
+        currentTime: 0,
+        duration: audio.duration || 0,
+        src: audioUrl,
+      });
     } catch (err: any) {
       console.error('TTS failed', err);
       setTtsError(err?.message || 'Failed to synthesize speech.');
     } finally {
       setIsSpeakingIndex(null);
+    }
+  };
+
+  // Play/pause and seek handlers for custom audio player
+  const handlePlayPause = () => {
+    if (!audioState.audio) return;
+    if (audioState.isPlaying) {
+      audioState.audio.pause();
+      setAudioState(s => ({ ...s, isPlaying: false }));
+    } else {
+      audioState.audio.play();
+      setAudioState(s => ({ ...s, isPlaying: true }));
+    }
+  };
+  const handleSeek = (value: number) => {
+    if (audioState.audio) {
+      audioState.audio.currentTime = value;
+      setAudioState(s => ({ ...s, currentTime: value }));
     }
   };
 
@@ -161,25 +251,34 @@ export const Chat: React.FC<ChatProps> = ({ messages, onSendMessage, isLoading, 
                     <p className="leading-relaxed whitespace-pre-wrap font-sans">{msg.content}</p>
                     {/* Speak button for assistant messages - Pixel Art Style */}
                     {msg.role === 'assistant' && (
-                      <button
-                        onClick={() => speakMessage(index)}
-                        className="mt-3 inline-flex items-center space-x-2 text-sm px-3 py-1 bg-purple-600 border-2 border-t-purple-300 border-l-purple-300 border-r-purple-900 border-b-purple-900 text-white hover:bg-purple-700 transition-all font-sans font-bold"
-                        title="Speak this message"
-                      >
-                        <Volume2 className="w-4 h-4" />
-                        <span>{isSpeakingIndex === index ? 'Speaking…' : (msg.voiceAudioUrl ? 'Replay' : 'Speak')}</span>
-                      </button>
+                      <>
+                        <button
+                          onClick={() => speakMessage(index)}
+                          className="mt-3 inline-flex items-center space-x-2 text-sm px-3 py-1 bg-purple-600 border-2 border-t-purple-300 border-l-purple-300 border-r-purple-900 border-b-purple-900 text-white hover:bg-purple-700 transition-all font-sans font-bold"
+                          title="Speak this message"
+                        >
+                          <Volume2 className="w-4 h-4" />
+                          <span>{isSpeakingIndex === index ? 'Speaking…' : (msg.voiceAudioUrl ? 'Replay' : 'Speak')}</span>
+                        </button>
+                        {/* Pixel Art Audio Player: only show for this message if audio is loaded */}
+                        {audioState.index === index && audioState.src && (
+                          <PixelAudioPlayer
+                            src={audioState.src}
+                            isPlaying={audioState.isPlaying}
+                            onPlayPause={handlePlayPause}
+                            currentTime={audioState.currentTime}
+                            duration={audioState.duration}
+                            onSeek={handleSeek}
+                          />
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
 
                 {/* Music card removed */}
                 {/* Voice audio playback */}
-                {msg.voiceAudioUrl && (
-                  <div className="mt-2 animate-fadeIn">
-                    <audio controls src={msg.voiceAudioUrl} className="w-full" />
-                  </div>
-                )}
+                {/* Audio player removed: no default audio controls rendered */}
               </div>
             ))}
           </>

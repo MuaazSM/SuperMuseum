@@ -41,7 +41,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-amber-600 tracking-wide uppercase font-sans [text-shadow:1px_1px_0px_#000]">
-                    Indian Heritage Museum
+                    Super Museum
                   </h1>
                   <div className="text-xs text-stone-600 uppercase tracking-wider font-sans">
                     Preserving • Educating • Inspiring
