@@ -251,27 +251,36 @@ const MuseumMap: React.FC = () => {
 
             {/* Information Modal */}
             {activePointData && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg p-6 max-w-md">
-                        <div className="flex justify-between items-start mb-4">
-                            <h2 className="text-2xl font-bold text-gray-900">{activePointData.title}</h2>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-yellow-700 to-yellow-800 px-5 py-4 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-white">
+                                {activePointData.title}
+                            </h3>
                             <button 
                                 onClick={() => setActivePoint(null)}
-                                className="text-gray-500 hover:text-gray-700"
+                                className="text-white/80 hover:text-white transition-colors"
                             >
-                                <X className="w-6 h-6" />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
-                        {activePointData.image && (
-                            <img 
-                                src={activePointData.image} 
-                                alt={activePointData.title}
-                                className="w-full h-48 object-cover rounded-lg mb-4"
-                            />
-                        )}
-                        <p className="text-gray-600">{activePointData.description}</p>
-                        <div className="mt-4">
-                            <span className="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm font-semibold text-gray-700">
+
+                        {/* Content */}
+                        <div className="p-5">
+                            {activePointData.image && (
+                                <img 
+                                    src={activePointData.image} 
+                                    alt={activePointData.title}
+                                    className="w-full h-40 object-cover rounded-md mb-4"
+                                />
+                            )}
+                            
+                            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                                {activePointData.description}
+                            </p>
+
+                            <span className="inline-block bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-medium">
                                 {activePointData.category}
                             </span>
                         </div>
