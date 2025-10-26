@@ -50,7 +50,14 @@ export class ChatService {
       throw new Error(`Chat API error ${resp.status}: ${txt}`);
     }
 
-    return resp.json();
+    const data = await resp.json();
+    
+    // Clean the response text if it exists
+    if (data.response) {
+      data.response = this.cleanResponseText(data.response);
+    }
+    
+    return data;
   }
 
   /**
@@ -72,7 +79,14 @@ export class ChatService {
       throw new Error(`Voice Chat API error ${resp.status}: ${txt}`);
     }
 
-    return resp.json();
+    const data = await resp.json();
+    
+    // Clean the transcript text if it exists
+    if (data.transcript) {
+      data.transcript = this.cleanResponseText(data.transcript);
+    }
+    
+    return data;
   }
 }
 
