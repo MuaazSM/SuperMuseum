@@ -16,8 +16,10 @@ export default function MusicPage() {
     setError('');
     setHasSearched(true);
     try {
-  const result = await MusicService.querySaavnAPI(query);
-  setPlaylist(result || []);
+      // Fetch songs without stream URLs initially (secure by default)
+      // Stream URLs will be fetched on-demand when user clicks play
+      const result = await MusicService.querySaavnAPI(query, false);
+      setPlaylist(result || []);
     } catch (err) {
       setError('Failed to fetch playlist.');
     } finally {

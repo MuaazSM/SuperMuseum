@@ -27,6 +27,8 @@ class SaavnClient:
         # simple in-memory caches (avoid lru_cache on async fns)
         self._search_cache: OrderedDict[tuple, List[Dict]] = OrderedDict()
         self._details_cache: OrderedDict[str, Optional[Dict]] = OrderedDict()
+        # NEW: Cache search results by track ID for fallback
+        self._search_by_id_cache: Dict[str, Dict] = {}
         self._cache_lock = asyncio.Lock()
         self._search_cache_max = 256
         self._details_cache_max = 512
@@ -65,10 +67,22 @@ class SaavnClient:
                 resp_a = await client.get(url_a, params=params_a)
                 if resp_a.status_code == 200:
                     data_a = resp_a.json()
-                    for item in (data_a.get("data", {}).get("results", []) or []):
+                    logger.info(f"Variant A response keys: {list(data_a.keys())}")
+                    # Try different response structures
+                    items = []
+                    if "data" in data_a:
+                        if isinstance(data_a["data"], dict):
+                            items = data_a["data"].get("results", []) or data_a["data"].get("songs", [])
+                        elif isinstance(data_a["data"], list):
+                            items = data_a["data"]
+                    elif "results" in data_a:
+                        items = data_a["results"]
+                    
+                    logger.info(f"Variant A found {len(items)} items")
+                    for item in items:
                         results.append(self._parse_song(item))
             except Exception as e:
-                logger.debug("variant A failed: %s", e)
+                logger.error(f"variant A failed: {e}")
 
             # If no results, try Variant B: local jiosaavn proxy style
             if not results:
@@ -79,8 +93,10 @@ class SaavnClient:
                     resp_b = await client.get(url_b, params=params_b)
                     if resp_b.status_code == 200:
                         data_b = resp_b.json()
+                        logger.info(f"Variant B response keys: {list(data_b.keys())}")
                         # songs under data.songs.results
                         song_items = (data_b.get("data", {}).get("songs", {}).get("results", []) or [])
+                        logger.info(f"Variant B found {len(song_items)} items")
                         for item in song_items[:limit]:
                             # Normalize minimal fields available in search response
                             norm = {
@@ -92,7 +108,9 @@ class SaavnClient:
                             }
                             results.append(self._parse_song(norm))
                 except Exception as e:
-                    logger.debug("variant B failed: %s", e)
+                    logger.error(f"variant B failed: {e}")
+        
+        logger.info(f"Total search results for '{query}': {len(results)}")
 
         # update cache
         async with self._cache_lock:
@@ -100,6 +118,10 @@ class SaavnClient:
             self._search_cache.move_to_end(cache_key)
             if len(self._search_cache) > self._search_cache_max:
                 self._search_cache.popitem(last=False)
+            # NEW: Also cache by track ID for fallback
+            for track in results:
+                if track.get("id"):
+                    self._search_by_id_cache[track["id"]] = track
         return list(results)
 
     async def get_song_details(self, track_id: str) -> Optional[Dict]:
@@ -119,23 +141,59 @@ class SaavnClient:
         async with self._cache_lock:
             if track_id in self._details_cache:
                 self._details_cache.move_to_end(track_id)
-                return dict(self._details_cache[track_id]) if self._details_cache[track_id] else None
-        url = f"{self._base_url}/songs/{track_id}"
-        logger.info("saavn song details: id=%s", track_id)
+                cached = self._details_cache[track_id]
+                if cached:
+                    return dict(cached)
+            # NEW: Check search cache for this ID
+            if track_id in self._search_by_id_cache:
+                logger.info(f"Using search cache for track {track_id}")
+                return dict(self._search_by_id_cache[track_id])
+        
+        # Try multiple endpoint patterns
+        urls_to_try = [
+            f"{self._base_url}/songs/{track_id}",
+            f"{self._base_url}/api/songs/{track_id}",
+            f"{self._base_url}/song/{track_id}",
+        ]
+        
+        parsed = None
         async with httpx.AsyncClient(timeout=20.0) as client:
-            resp = await client.get(url)
-            if resp.status_code == 404:
-                return None
-            resp.raise_for_status()
-            data = resp.json()
-        payload = data.get("data")
-        if isinstance(payload, dict):
-            item = payload
-        elif isinstance(payload, list) and payload:
-            item = payload[0]
-        else:
-            item = None
-        parsed = self._parse_song(item) if item else None
+            for url in urls_to_try:
+                try:
+                    logger.info(f"Trying saavn song details: {url}")
+                    resp = await client.get(url)
+                    if resp.status_code == 404:
+                        logger.debug(f"404 at {url}, trying next endpoint")
+                        continue
+                    resp.raise_for_status()
+                    data = resp.json()
+                    
+                    payload = data.get("data")
+                    if isinstance(payload, dict):
+                        item = payload
+                    elif isinstance(payload, list) and payload:
+                        item = payload[0]
+                    else:
+                        item = None
+                    
+                    if item:
+                        parsed = self._parse_song(item)
+                        logger.info(f"Successfully fetched track {track_id} from {url}")
+                        break
+                except Exception as e:
+                    logger.debug(f"Failed to fetch from {url}: {e}")
+                    continue
+        
+        # NEW: Final fallback - check search cache again before giving up
+        if not parsed:
+            async with self._cache_lock:
+                if track_id in self._search_by_id_cache:
+                    logger.info(f"Falling back to search cache for track {track_id}")
+                    parsed = self._search_by_id_cache[track_id]
+        
+        if not parsed:
+            logger.warning(f"Could not fetch track details for {track_id} from any source")
+        
         # update cache
         async with self._cache_lock:
             self._details_cache[track_id] = parsed

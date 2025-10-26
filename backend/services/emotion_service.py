@@ -14,8 +14,8 @@ def classify_emotion(text: str) -> Tuple[str, float]:
 
     returns: (label, confidence)
     """
-    # allow tests/CI to force offline heuristic to avoid model downloads
-    if os.getenv("EMOTION_OFFLINE") == "1":
+    # allow tests/CI/serverless to force offline heuristic to avoid model downloads
+    if os.getenv("EMOTION_OFFLINE") == "1" or os.getenv("VERCEL") == "1":
         low = text.lower()
         if any(w in low for w in ["happy", "joy", "delight"]):
             return "happy", 0.8

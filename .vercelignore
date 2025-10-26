@@ -6,6 +6,10 @@ backend/data/
 backend/logs/
 backend/tmp/
 backend/__pycache__/
+backend/pyproject.toml
+
+# Ignore heavy local requirements; Vercel uses requirements-vercel.txt
+backend/requirements.txt
 
 # Database and binary files
 *.sqlite3

@@ -49,6 +49,11 @@ class VectorStore:
         if self._vstore is not None:
             return
 
+        # Skip heavy Chroma in serverless/Vercel
+        if os.getenv("VERCEL") == "1":
+            logger.info("Vercel/serverless: skipping local ChromaDB initialization")
+            return
+
         try:
             # defer heavy imports until use (community split)
             try:
@@ -98,6 +103,13 @@ class VectorStore:
 
         synchronous wrapper to keep compatibility with existing agents.
         """
+        # Return empty list if vectorstore not initialized (serverless/lean mode)
+        if not self._vstore:
+            self._ensure_vstore()  # Try once more
+            if not self._vstore:
+                logger.warning("vectorstore unavailable: returning empty results")
+                return []
+        
         retriever = self.load_retriever(top_k=top_k)
         # prefer modern invoke API; fall back to legacy methods
         try:

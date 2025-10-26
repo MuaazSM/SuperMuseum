@@ -50,11 +50,12 @@ export class MusicService {
       };
     }
   }
-  static async querySaavnAPI(searchQuery: string): Promise<Song[]> {
+  static async querySaavnAPI(searchQuery: string, includeStream: boolean = false): Promise<Song[]> {
     try {
       const params = new URLSearchParams({
         q: searchQuery,
-        limit: '20'
+        limit: '20',
+        include_stream: includeStream ? 'true' : 'false'
       });
   const response = await fetch(`${API_BASE_URL}/api/music/search?${params.toString()}`);
 
@@ -108,6 +109,42 @@ export class MusicService {
    * Generate reasoning for why this song matches the story
    */
   // Removed reasoning/context logic for simplicity
+
+  /**
+   * Fetch a single track with stream URL for playback
+   */
+  static async getTrackWithStream(trackId: string): Promise<Song | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/music/track/${trackId}?include_stream=true`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch track details');
+      }
+
+      const track = await response.json();
+      const toMMSS = (ms?: number | null): string => {
+        if (!ms || ms <= 0) return '0:00';
+        const totalSec = Math.floor(ms / 1000);
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+      };
+
+      return {
+        id: String(track.id ?? trackId),
+        title: track.title ?? '',
+        artist: Array.isArray(track.artists) ? (track.artists[0] ?? 'Unknown') : (track.artists ?? 'Unknown'),
+        album: track.album ?? '',
+        duration: toMMSS(track.duration_ms),
+        imageUrl: '/images/music/default.svg',
+        playUrl: track.stream_url ?? '#',
+        year: undefined,
+      };
+    } catch (error) {
+      console.error('Error fetching track with stream:', error);
+      return null;
+    }
+  }
 
   /**
    * Main function: Generate complete music playlist from story
